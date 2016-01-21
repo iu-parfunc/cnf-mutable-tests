@@ -6,6 +6,9 @@ GHC ?= ghc/inplace/bin/ghc-stage1
 
 all: Main
 
+docker:
+	time docker build -t cnf-mutable-tests .
+
 submod:
 	git clone --recursive git://git.haskell.org/ghc.git
 #	(cd ghc && git remote add fork git@github.com:iu-parfunc/ghc.git)
@@ -13,6 +16,7 @@ submod:
 	(cd ghc && git fetch fork)
 	(cd ghc && git checkout 9df22e29ddb74aca893925296e2606f3b962374b)
 	(cd ghc && git submodule update)
+
 
 ghc:
 	sed 's/#BuildFlavour = devel1/BuildFlavour = devel1/' ghc/mk/build.mk.sample > ghc/mk/build.mk
