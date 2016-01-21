@@ -1,0 +1,4 @@
+[submodule "ghc"]
+	path = ghc
+	url = https://github.com/iu-parfunc/ghc.git
+	branch = cnf/mutable
