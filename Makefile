@@ -15,7 +15,7 @@ submod:
 
 ghc:
 	sed 's/#BuildFlavour = devel1/BuildFlavour = devel1/' ghc/mk/build.mk.sample > ghc/mk/build.mk
-	(cd ghc && ./boot && ./configure --prefix $HOME/opt/ghc-cnf-mutable && make -j)
+	(cd ghc && ./boot && ./configure --prefix $(HOME)/opt/ghc-cnf-mutable && make -j)
 
 # I can't get this to work:
 submod2:
