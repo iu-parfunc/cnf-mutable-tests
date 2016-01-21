@@ -1,4 +1,6 @@
-GHC ?= ghc-stage2
+# GHC ?= ghc-stage2
+# Stage1 should be sufficient for us:
+GHC ?= ghc/inplace/bin/ghc-stage1
 
 .PHONY: all ghc
 
