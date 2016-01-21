@@ -1,5 +1,7 @@
 GHC ?= ghc-stage2
 
+.PHONY: all ghc
+
 all: Main
 
 submod:
@@ -7,6 +9,10 @@ submod:
 	(cd ghc && git remote add fork git@github.com:iu-parfunc/ghc.git)
 	(cd ghc && git fetch --all)
 	(cd ghc && git checkout 9df22e29ddb74aca893925296e2606f3b962374b)
+
+ghc:
+	sed 's/#BuildFlavour = devel1/BuildFlavour = devel1/' ghc/mk/build.mk.sample > ghc/mk/build.mk
+	(cd ghc && time ./boot && time ./configure --prefix $HOME/opt/ghc-cnf-mutable && time make -j)
 
 # I can't get this to work:
 submod2:
