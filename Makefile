@@ -8,8 +8,9 @@ all: Main
 
 submod:
 	git clone --recursive git://git.haskell.org/ghc.git
-	(cd ghc && git remote add fork git@github.com:iu-parfunc/ghc.git)
-	(cd ghc && git fetch --all)
+#	(cd ghc && git remote add fork git@github.com:iu-parfunc/ghc.git)
+	(cd ghc && git remote add fork https://github.com/iu-parfunc/ghc.git)
+	(cd ghc && git fetch fork)
 	(cd ghc && git checkout 9df22e29ddb74aca893925296e2606f3b962374b)
 
 ghc:
