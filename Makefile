@@ -4,10 +4,9 @@ all: Main
 
 submod:
 	git clone --recursive git://git.haskell.org/ghc.git
-	cd ghc
-	git remote add fork git@github.com:iu-parfunc/ghc.git
-	git fetch --all
-	git checkout -f 9df22e29ddb74aca893925296e2606f3b962374b
+	(cd ghc && git remote add fork git@github.com:iu-parfunc/ghc.git)
+	(cd ghc && git fetch --all)
+	(cd ghc && git checkout 9df22e29ddb74aca893925296e2606f3b962374b)
 
 # I can't get this to work:
 submod2:
