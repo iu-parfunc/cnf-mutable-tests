@@ -4,4 +4,4 @@ ADD Makefile Main.hs cnf-mutable-tests/
 
 WORKDIR cnf-mutable-tests
 
-RUN make -j all
+RUN make JOBS=3 -j all

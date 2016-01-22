@@ -1,6 +1,7 @@
 # GHC ?= ghc-stage2
 # Stage1 should be sufficient for us:
 GHC ?= ghc/inplace/bin/ghc-stage1
+JOBS ?=
 
 .PHONY: all docker clean
 
@@ -28,7 +29,7 @@ ghc: submod
 	sed -e 's/#BuildFlavour = devel1/BuildFlavour = devel1/' \
 	    -e 's/#V=0/V=0/' ghc/mk/build.mk.sample \
 	    > ghc/mk/build.mk
-	(cd ghc && ./boot && ./configure --quiet --prefix $(HOME)/opt/ghc-cnf-mutable && make -j)
+	(cd ghc && ./boot && ./configure --quiet --prefix $(HOME)/opt/ghc-cnf-mutable && make -j $(JOBS))
 
 Main: ghc Main.hs
 	$(GHC) --make -Wall Main.hs
