@@ -1,9 +1,7 @@
 FROM fpco/stack-build:lts-4.2
 
-ADD ./Makefile cnf-mutable-tests/Makefile
+ADD Makefile Main.hs cnf-mutable-tests/
 
-RUN cd ./cnf-mutable-tests/ && make submod
-RUN cd ./cnf-mutable-tests/ && make ghc
-# RUN cd ./cnf-mutable-tests/ &&
+WORKDIR cnf-mutable-tests
 
-# ADD ./ cnf-mutable-tests/
+RUN make -j all
