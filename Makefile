@@ -17,16 +17,18 @@ gitconfig:
 	git config --global url."git@github.com:/ghc/packages-".insteadOf      git@github.com:/ghc/packages/
 
 submod: gitconfig
-	git clone --recursive git://git.haskell.org/ghc.git
+	git clone --quiet --recursive git://git.haskell.org/ghc.git
 	(cd ghc && git remote add fork https://github.com/iu-parfunc/ghc.git)
 	(cd ghc && git fetch fork)
 	(cd ghc && git checkout cnf/mutable)
 	(cd ghc && git reset --hard && git clean -dfx)
-	(cd ghc && git submodule update --init --recursive)
+	(cd ghc && git submodule update --quiet --init --recursive)
 
 ghc: submod
-	sed 's/#BuildFlavour = devel1/BuildFlavour = devel1/' ghc/mk/build.mk.sample > ghc/mk/build.mk
-	(cd ghc && ./boot && ./configure --prefix $(HOME)/opt/ghc-cnf-mutable && make -j)
+	sed -e 's/#BuildFlavour = devel1/BuildFlavour = devel1/' \
+	    -e 's/#V=0/V=0/' ghc/mk/build.mk.sample \
+	    > ghc/mk/build.mk
+	(cd ghc && ./boot && ./configure --quiet --prefix $(HOME)/opt/ghc-cnf-mutable && make -j)
 
 Main: ghc Main.hs
 	$(GHC) --make -Wall Main.hs
