@@ -33,4 +33,4 @@ test2 = do x <- newIORef (42 :: Int)
 --            print a'
 
 main :: IO ()
-main = test2
+main = test1 >> test2
