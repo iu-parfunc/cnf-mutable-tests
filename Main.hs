@@ -19,7 +19,7 @@ test1 = do c <- newCompact 64 (42 :: Int)
            print x
 
 test2 :: IO ()
-test2 = do x <- newIORef $! (42 :: Int)
+test2 = do x <- newIORef (42 :: Int)
            c <- newCompact 64 x
            y <- newIORef (21 :: Int)
            c' <- appendCompact c y
