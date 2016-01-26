@@ -18,14 +18,7 @@ all: Main
 docker:
 	time docker build -t cnf-mutable-tests .
 
-gitconfig:
-	git config --global url."git://github.com/ghc/packages-".insteadOf     git://github.com/ghc/packages/
-	git config --global url."http://github.com/ghc/packages-".insteadOf    http://github.com/ghc/packages/
-	git config --global url."https://github.com/ghc/packages-".insteadOf   https://github.com/ghc/packages/
-	git config --global url."ssh://git@github.com/ghc/packages-".insteadOf ssh://git@github.com/ghc/packages/
-	git config --global url."git@github.com:/ghc/packages-".insteadOf      git@github.com:/ghc/packages/
-
-submod: gitconfig
+submod: 
 	git clone --quiet --recursive git://git.haskell.org/ghc.git
 	(cd ghc && git remote add fork https://github.com/iu-parfunc/ghc.git)
 	(cd ghc && git fetch fork)
