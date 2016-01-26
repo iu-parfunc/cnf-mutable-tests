@@ -10,7 +10,7 @@ import System.IO.Unsafe
 --   rnf a = a `seq` ()
 
 instance NFData a => NFData (IORef a) where
-  rnf a = unsafePerformIO $ modifyIORef a force
+  rnf a = unsafePerformIO $ modifyIORef' a force
 
 test1 :: IO ()
 test1 = do c <- newCompact 64 (42 :: Int)
