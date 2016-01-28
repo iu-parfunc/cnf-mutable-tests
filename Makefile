@@ -7,7 +7,7 @@ JOBS ?=
 # It is hardcoded for reproducibility.
 # We could use a script to update it in lieu of "git submodule" commands.
 SUBMOD_SHA = dc163976391fe22de211c72f0bdd21e1cafd747b
-# Alternatively, there may be some way that we can go back to using 
+# Alternatively, there may be some way that we can go back to using
 # a real submodule, but still add an extra remote and use it for recursive
 # cloning....
 
@@ -19,7 +19,7 @@ docker:
 	time docker build -t cnf-mutable-tests .
 
 submod: ghc
-ghc: 
+ghc:
 	git clone --quiet --recursive git://git.haskell.org/ghc.git
 	(cd ghc && git remote add fork https://github.com/iu-parfunc/ghc.git)
 	$(MAKE) pull
@@ -41,10 +41,8 @@ Main: build_ghc Main.hs
 clean:
 	rm -f Main Main.hi Main.o
 
-
 # A handy way to bring the "submodule" up to date.
-# FINISHME: Need to grab the latest SHA on the branch:
 submod_latest: submod
 	(cd ghc && git fetch --all && git checkout cnf/mutable)
-	sed -i '/SUBMOD_SHA =/c\SUBMOD_SHA = NEWSHA' Makefile
-
+	$(eval NEWSHA := $(shell cd ghc && git rev-parse HEAD))
+	sed -i "/^SUBMOD_SHA =/c\SUBMOD_SHA = $(NEWSHA)" Makefile
