@@ -6,7 +6,7 @@ JOBS ?=
 # This should track the cnf/mutable branch.
 # It is hardcoded for reproducibility.
 # We could use a script to update it in lieu of "git submodule" commands.
-SUBMOD_SHA = dc163976391fe22de211c72f0bdd21e1cafd747b
+SUBMOD_SHA = 61a27d33d48d566e20b026357ffbfe04edeca30b
 # Alternatively, there may be some way that we can go back to using
 # a real submodule, but still add an extra remote and use it for recursive
 # cloning....
