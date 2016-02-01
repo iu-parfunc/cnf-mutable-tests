@@ -21,6 +21,14 @@ instance NFData a => NFData (V.IOVector a) where
                                then V.unsafeModify a f i >>= \ !_ -> go' a f (i + 1) l
                                else return ()
 
+printV :: Show a => V.IOVector a -> IO ()
+printV a = go 0 (V.length a)
+  where go i l = if i < l
+                    then do x <- V.read a i
+                            print x
+                            go (i + 1) l
+                    else return ()
+
 test1 :: IO ()
 test1 = do c <- newCompact 64 (42 :: Int)
            c' <- appendCompact c (21 :: Int)
@@ -38,6 +46,7 @@ test2 = do x <- newIORef (42 :: Int)
 test3 :: IO ()
 test3 = do x :: V.IOVector Int <- V.new 5
            _ <- V.set x 42
+           _ <- printV x
            c <- newCompact 64 x
            y <- V.new 5
            _ <- V.set y 21
