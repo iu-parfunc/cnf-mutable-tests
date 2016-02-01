@@ -11,6 +11,7 @@ import           Data.IORef
 import qualified Data.Vector.Mutable         as V
 import qualified Data.Vector.Unboxed.Mutable as U
 import           System.IO.Unsafe
+import           System.Mem
 
 instance NFData a => NFData (IORef a) where
   rnf a = unsafePerformIO $ modifyIORef' a force
@@ -74,6 +75,7 @@ test4 :: IO ()
 test4 = do x :: V.IOVector Int <- V.new 5
            _ <- V.set x 42
            _ <- printV x
+           _ <- performMajorGC
            c <- newCompact 64 x
            y <- V.new 5
            _ <- V.set y 21
