@@ -30,6 +30,22 @@ printV a = go 0 (V.length a)
                             go (i + 1) l
                     else return ()
 
+readV :: V.IOVector a -> IO [a]
+readV a = go a 0 (V.length a)
+  where go a i l = if i < l
+                    then do x <- V.read a i
+                            xs <- go a (i + 1) l
+                            return (x:xs)
+                    else return []
+
+readU :: U.Unbox a => U.IOVector a -> IO [a]
+readU a = go a 0 (U.length a)
+  where go a i l = if i < l
+                    then do x <- U.read a i
+                            xs <- go a (i + 1) l
+                            return (x:xs)
+                    else return []
+
 test1 :: IO ()
 test1 = do c <- newCompact 64 (42 :: Int)
            c' <- appendCompact c (21 :: Int)
@@ -51,7 +67,7 @@ test3 = do x :: U.IOVector Int <- U.new 5
            y <- U.new 5
            _ <- U.set y 21
            c' <- appendCompact c y
-           z :: Int <- U.read (getCompact c') 0
+           z :: [Int] <- readU (getCompact c')
            print z
 
 test4 :: IO ()
@@ -62,7 +78,7 @@ test4 = do x :: V.IOVector Int <- V.new 5
            y <- V.new 5
            _ <- V.set y 21
            c' <- appendCompact c y
-           z :: Int <- V.read (getCompact c') 0
+           z :: [Int] <- readV (getCompact c')
            print z
 
 main :: IO ()
