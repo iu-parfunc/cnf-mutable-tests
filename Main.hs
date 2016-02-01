@@ -8,7 +8,8 @@ module Main where
 import           Control.DeepSeq
 import           Data.Compact
 import           Data.IORef
-import qualified Data.Vector.Mutable as V
+import qualified Data.Vector.Mutable         as V
+import qualified Data.Vector.Unboxed.Mutable as U
 import           System.IO.Unsafe
 
 instance NFData a => NFData (IORef a) where
@@ -44,7 +45,17 @@ test2 = do x <- newIORef (42 :: Int)
            print z
 
 test3 :: IO ()
-test3 = do x :: V.IOVector Int <- V.new 5
+test3 = do x :: U.IOVector Int <- U.new 5
+           _ <- U.set x 42
+           c <- newCompact 64 x
+           y <- U.new 5
+           _ <- U.set y 21
+           c' <- appendCompact c y
+           z :: Int <- U.read (getCompact c') 0
+           print z
+
+test4 :: IO ()
+test4 = do x :: V.IOVector Int <- V.new 5
            _ <- V.set x 42
            _ <- printV x
            c <- newCompact 64 x
@@ -55,4 +66,4 @@ test3 = do x :: V.IOVector Int <- V.new 5
            print z
 
 main :: IO ()
-main = test1 >> test2 >> test3
+main = test1 >> test2 >> test3 >> test4
