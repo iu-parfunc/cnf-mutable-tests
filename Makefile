@@ -31,7 +31,7 @@ pull:
 	(cd ghc && git submodule update --quiet --init --recursive)
 
 $(GHC): ghc
-	sed -e 's/#BuildFlavour = devel1/BuildFlavour = devel1/' \
+	sed -e 's/#BuildFlavour = quick/BuildFlavour = quick/' \
 	    -e 's/#V=0/V=0/' ghc/mk/build.mk.sample \
 	    > ghc/mk/build.mk
 	(cd ghc && ./boot && ./configure --quiet --prefix $(PREFIX) && make -j $(JOBS))
