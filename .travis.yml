@@ -4,4 +4,4 @@ services:
   - docker
 
 script:
-  - make docker
+  - make JOBS=3 docker

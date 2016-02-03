@@ -17,7 +17,7 @@ SUBMOD_SHA = 61a27d33d48d566e20b026357ffbfe04edeca30b
 all: exe
 
 docker:
-	time docker build -t cnf-mutable-tests .
+	time docker build --build-arg JOBS=$(JOBS) -t cnf-mutable-tests .
 
 ghc:
 	git clone --quiet --recursive git://git.haskell.org/ghc.git
