@@ -38,9 +38,9 @@ $(GHC): ghc
 	(cd ghc && make install)
 
 exe: $(GHC) $(SRC)
-	$(CABAL) -w $(GHC) install --only-dep
-	$(CABAL) -w $(GHC) configure --enable-tests
-	$(CABAL) -w $(GHC) build
+	$(CABAL) install -w $(GHC) --only-dep
+	$(CABAL) configure -w $(GHC) --enable-tests
+	$(CABAL) build
 
 clean:
 	$(CABAL) clean
