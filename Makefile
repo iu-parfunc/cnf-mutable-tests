@@ -1,7 +1,8 @@
-# GHC ?= ghc-stage2
-# Stage1 should be sufficient for us:
-GHC ?= ghc/inplace/bin/ghc-stage1
+PREFIX ?= $(HOME)/opt/ghc-cnf-mutable
+GHC ?= $(PREFIX)/bin/ghc
+CABAL ?= cabal
 JOBS ?=
+SRC = $(wildcard *.hs)
 
 # This should track the cnf/mutable branch.
 # It is hardcoded for reproducibility.
@@ -11,38 +12,41 @@ SUBMOD_SHA = 61a27d33d48d566e20b026357ffbfe04edeca30b
 # a real submodule, but still add an extra remote and use it for recursive
 # cloning....
 
-.PHONY: all docker clean submod pull build_ghc
+.PHONY: all docker clean pull exe
 
-all: Main
+all: exe
 
 docker:
 	time docker build -t cnf-mutable-tests .
 
-submod: ghc
 ghc:
 	git clone --quiet --recursive git://git.haskell.org/ghc.git
 	(cd ghc && git remote add fork https://github.com/iu-parfunc/ghc.git)
 	$(MAKE) pull
+
 pull:
 	(cd ghc && git fetch fork)
 	(cd ghc && git checkout $(SUBMOD_SHA))
 	(cd ghc && git reset --hard && git clean -dfx)
 	(cd ghc && git submodule update --quiet --init --recursive)
 
-build_ghc: ghc
+$(GHC): ghc
 	sed -e 's/#BuildFlavour = devel1/BuildFlavour = devel1/' \
 	    -e 's/#V=0/V=0/' ghc/mk/build.mk.sample \
 	    > ghc/mk/build.mk
-	(cd ghc && ./boot && ./configure --quiet --prefix $(HOME)/opt/ghc-cnf-mutable && make -j $(JOBS))
+	(cd ghc && ./boot && ./configure --quiet --prefix $(PREFIX) && make -j $(JOBS))
+	(cd ghc && make install)
 
-Main: build_ghc Main.hs
-	$(GHC) --make -Wall Main.hs
+exe: $(GHC) $(SRC)
+	$(CABAL) -w $(GHC) install --only-dep
+	$(CABAL) -w $(GHC) configure --enable-tests
+	$(CABAL) -w $(GHC) build
 
 clean:
-	rm -f Main Main.hi Main.o
+	$(CABAL) clean
 
 # A handy way to bring the "submodule" up to date.
-submod_latest: submod
+submod_latest: ghc
 	(cd ghc && git fetch --all && git checkout cnf/mutable)
 	$(eval NEWSHA := $(shell cd ghc && git rev-parse HEAD))
 	sed -i "/^SUBMOD_SHA =/c\SUBMOD_SHA = $(NEWSHA)" Makefile
