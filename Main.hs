@@ -8,13 +8,18 @@ module Main where
 import           Control.DeepSeq
 import           Data.Compact
 import           Data.IORef
+import           Data.Primitive.MutVar
 import qualified Data.Vector.Mutable         as V
 import qualified Data.Vector.Unboxed.Mutable as U
+import           GHC.Prim
 import           System.IO.Unsafe
 import           System.Mem
 
 instance NFData a => NFData (IORef a) where
   rnf a = unsafePerformIO $ modifyIORef' a force
+
+instance NFData a => NFData (MutVar RealWorld a) where
+  rnf a = unsafePerformIO $ modifyMutVar' a force
 
 instance NFData a => NFData (V.IOVector a) where
   rnf a = unsafePerformIO $ modifyIOVector' a force
@@ -62,7 +67,15 @@ test2 = do x <- newIORef (42 :: Int)
            print z
 
 test3 :: IO ()
-test3 = do x :: U.IOVector Int <- U.new 5
+test3 = do x <- newMutVar (42 :: Int)
+           c <- newCompact 64 x
+           y <- newMutVar (21 :: Int)
+           c' <- appendCompact c y
+           z <- readMutVar $ getCompact c'
+           print z
+
+test4 :: IO ()
+test4 = do x :: U.IOVector Int <- U.new 5
            _ <- U.set x 42
            c <- newCompact 64 x
            y <- U.new 5
@@ -71,8 +84,8 @@ test3 = do x :: U.IOVector Int <- U.new 5
            z :: [Int] <- readU (getCompact c')
            print z
 
-test4 :: IO ()
-test4 = do x :: V.IOVector Int <- V.new 5
+test5 :: IO ()
+test5 = do x :: V.IOVector Int <- V.new 5
            _ <- V.set x 42
            _ <- printV x
            _ <- performMajorGC
@@ -84,4 +97,4 @@ test4 = do x :: V.IOVector Int <- V.new 5
            print z
 
 main :: IO ()
-main = test1 >> test2 >> test3 >> test4
+main = test1 >> test2 >> test3 >> test4 >> test5
