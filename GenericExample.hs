@@ -42,7 +42,7 @@ data Tree = Leaf !Int |  Node !Tree !Tree
   deriving (Generic, DeepStrict)
 
 data LazyTree = LLeaf !Int | LNode LazyTree LazyTree
---  deriving (Generic, DeepStrict)
+  deriving (Generic, DeepStrict)
 -- The above line produces this error:
      -- No instance for (GDeepStrict
      --                     (M1
