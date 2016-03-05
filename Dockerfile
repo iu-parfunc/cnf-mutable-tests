@@ -4,5 +4,7 @@ ADD Makefile Main.hs cnf-mutable-tests/
 
 WORKDIR cnf-mutable-tests
 
-ARG JOBS
-RUN make -j $JOBS all
+RUN cabal update
+
+# ARG JOBS
+RUN make -j  all
