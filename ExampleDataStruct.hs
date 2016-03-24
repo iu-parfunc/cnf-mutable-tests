@@ -21,7 +21,7 @@ newIntBox = undefined
 writeIntBox :: Int -> IntBox -> IO ()
 writeIntBox n (IntBox ref) =
   do let cr = unsafeGetCompact ref -- Just to get which Compact its in.
-     n' <- appendCompact cr n
+     n' <- appendCompact cr n -- FIXME!  Make this work on unboxed so we don't leak.
      writeCNFRef ref n'
 
 readIntBox :: IntBox -> IO Int
