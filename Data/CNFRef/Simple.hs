@@ -1,5 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 
+-- | An UNINDEXED version of the CNFRef...
+
 module Data.CNFRef.Simple
        ( CNFRef
        , DeepStrict (..)

@@ -1,5 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 
+-- | Brainstorming file with a few different versions of the API.
+
 module Main where
 
 import Control.DeepSeq
@@ -10,6 +12,10 @@ import System.IO.Unsafe
 -- import Data.STRef
 
 newtype CNFRef s a = CNFRef (IORef a)
+
+
+-- Version 1:
+----------------------------------
 
 class DeepStrict a where
 
@@ -32,11 +38,14 @@ newCNFRef !a = undefined
 writeCNFRef :: Tracked t => CNFRef s (t s) -> t s -> MutCNF s ()
 writeCNFRef _ !a = undefined
 
+-- Version 2:
 ----------------------------------
 
 -- Abstract datatype (hidden constructor)
 -- Can only be created with copy2.
 data In s a
+-- ^ RRN: It probably makes more sense to add an 's' param to
+-- `Compact` itself, rather than have `In`.
 
 newCNFRef2 :: (In s a) -> IO (CNFRef s a)
 newCNFRef2 !a = undefined
@@ -54,6 +63,7 @@ copy2 !a = undefined
 open :: In s a -> a 
 open = undefined
 
+-- Version 3:
 ----------------------------------
 
 newCNFRef3 :: DeepStrict a => a -> IO (CNFRef s a)
@@ -76,6 +86,7 @@ copy3 _ref !_a = undefined
 -----------------------------------
 
 newtype TrackedInt s = TI Int
+-- ^ This could just be `Compact s Int`...
 
 data Tree = Leaf !Int |  Node !Tree !Tree
 

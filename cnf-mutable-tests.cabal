@@ -27,7 +27,9 @@ executable cnf-mutable-tests
 
 library
   exposed-modules:     Data.CNFRef
+                     , Data.CNFRef2
                      , Data.CNFRef.Simple
+                     , ExampleDataStruct
   build-depends:       base >=4.8 && <4.9
                      , deepseq >=1.4 && <1.5
                      , compact >=1.0 && <1.1
