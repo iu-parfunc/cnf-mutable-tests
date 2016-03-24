@@ -19,10 +19,15 @@ newIntBox :: IO IntBox
 newIntBox = undefined
 
 writeIntBox :: Int -> IntBox -> IO ()
-writeIntBox n (IntBox r) = undefined
+writeIntBox n (IntBox ref) =
+  do let cr = unsafeGetCompact ref -- Just to get which Compact its in.
+     n' <- appendCompact cr n
+     writeCNFRef ref n'
 
 readIntBox :: IntBox -> IO Int
-readIntBox (IntBox r) = undefined
+readIntBox (IntBox r) =
+  do c <- readCNFRef r
+     return (getCompact c)
 
 
 

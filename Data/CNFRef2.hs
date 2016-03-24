@@ -1,7 +1,8 @@
 {-# LANGUAGE BangPatterns #-}
 
 module Data.CNFRef2
-       ( CNFRef
+       ( CNFRef(..) -- Transparent for now...
+       , unsafeGetCompact
        , DeepStrict (..)
        , newCNFRef
        , readCNFRef
@@ -25,6 +26,13 @@ newtype CNFRef s a = CNFRef (Compact s (IORef a))
 -- | A hypothetical typeclass to track transitive strictness.
 --   I.e. datatypes whose values cannot contain (reach) a thunk.
 class NFData a => DeepStrict a where
+
+instance DeepStrict Int
+
+-- | TODO: Replace this with a function that just extracts the "Block", not a Compact.
+--   Or at the very least cast it so it returns `Compact s ()`
+unsafeGetCompact :: CNFRef s a -> Compact s (IORef a)
+unsafeGetCompact (CNFRef c) = c
 
 
 -- | Copy a boxed value into a compact region and create a new CNFRef
