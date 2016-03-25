@@ -1,11 +1,14 @@
-{-# LANGUAGE GADTs, ExistentialQuantification, ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns              #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE GADTs                     #-}
+{-# LANGUAGE ScopedTypeVariables       #-}
 
--- | 
+-- | An example data structure using CNFRef
 
 module ExampleDataStruct where
 
-import Data.Compact.Indexed
 import Data.CNFRef2
+import Data.Compact.Indexed
 
 -- import Data.Vector.Unboxed
 
@@ -14,20 +17,15 @@ data IntBox = forall s . IntBox (CNFRef s Int)
 -- ^ FIXME: this should use an unboxed vector, and store an unboxed Int.
 --   Storing Ints creates a silly memory leak problem.
 
-
-newIntBox :: IO IntBox
-newIntBox = undefined
+newIntBox :: Int -> IO IntBox
+newIntBox !n = IntBox <$> newCNFRef n
 
 writeIntBox :: Int -> IntBox -> IO ()
-writeIntBox n (IntBox ref) =
-  do let cr = unsafeGetCompact ref -- Just to get which Compact its in.
-     n' <- appendCompact cr n -- FIXME!  Make this work on unboxed so we don't leak.
-     writeCNFRef ref n'
+writeIntBox !n (IntBox !ref) = do
+  c <- copyToCompact ref n
+  writeCNFRef ref c
 
 readIntBox :: IntBox -> IO Int
-readIntBox (IntBox r) =
-  do c <- readCNFRef r
-     return (getCompact c)
-
-
-
+readIntBox (IntBox !ref) = do
+  !c <- readCNFRef ref
+  return (getCompact c)
