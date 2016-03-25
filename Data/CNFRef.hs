@@ -3,7 +3,6 @@
 module Data.CNFRef
        ( CNFRef
        , In
-       , DeepStrict (..)
        , copy
        , newCNFRef
        , readCNFRef
@@ -14,12 +13,9 @@ module Data.CNFRef
        ) where
 
 import Control.DeepSeq
+import Data.CNFRef.DeepStrict
 import Data.Compact
 import Data.IORef
-import System.IO.Unsafe
-
-instance NFData a => NFData (IORef a) where
-  rnf a = unsafePerformIO $ modifyIORef' a force
 
 newtype CNFRef s a = CNFRef (Compact (IORef a))
 
@@ -28,8 +24,6 @@ newtype In s a = In (Compact a)
 copy :: DeepStrict a => CNFRef s b -> a -> IO (In s a)
 copy (CNFRef !c) !a = do c' <- appendCompact c a
                          return $ In c'
-
-class NFData a => DeepStrict a where
 
 -- class Tracked t where
 --   copy :: DeepStrict (t s1) => t s1 -> t s2

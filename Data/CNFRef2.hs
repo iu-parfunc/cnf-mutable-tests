@@ -2,7 +2,6 @@
 
 module Data.CNFRef2
        ( CNFRef(..) -- Transparent for now...
-       , DeepStrict (..)
        , copyToCompact
        , newCNFRef
        , readCNFRef
@@ -13,20 +12,11 @@ module Data.CNFRef2
        ) where
 
 import Control.DeepSeq
+import Data.CNFRef.DeepStrict
 import Data.Compact.Indexed
 import Data.IORef
-import System.IO.Unsafe
-
-instance NFData a => NFData (IORef a) where
-  rnf a = unsafePerformIO $ modifyIORef' a force
 
 newtype CNFRef s a = CNFRef (Compact s (IORef a))
-
--- | A hypothetical typeclass to track transitive strictness.
---   I.e. datatypes whose values cannot contain (reach) a thunk.
-class NFData a => DeepStrict a where
-
-instance DeepStrict Int
 
 -- | Copy a new value to the same compact region as the CNFRef.
 copyToCompact :: DeepStrict a => CNFRef s a -> a -> IO (Compact s a)

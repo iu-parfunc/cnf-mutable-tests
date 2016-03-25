@@ -1,3 +1,1 @@
-module Data.CNFRef.Internal (In) where
-
-import Data.Compact
+module Data.CNFRef.Internal where

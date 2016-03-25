@@ -4,7 +4,6 @@
 
 module Data.CNFRef.Simple
        ( CNFRef
-       , DeepStrict (..)
        , newCNFRef
        , readCNFRef
        , writeCNFRef
@@ -16,13 +15,11 @@ module Data.CNFRef.Simple
        ) where
 
 import           Control.DeepSeq
-import qualified Data.Atomics     as A
+import qualified Data.Atomics           as A
+import           Data.CNFRef.DeepStrict
 import           Data.Compact
 import           Data.IORef
 import           System.IO.Unsafe
-
-instance NFData a => NFData (IORef a) where
-  rnf a = unsafePerformIO $ modifyIORef' a force
 
 newtype CNFRef a = CNFRef (Compact (IORef a))
 
@@ -31,8 +28,6 @@ instance Eq (CNFRef a) where
     let io = getCompact c
         io' = getCompact c'
     in inCompact c io' && inCompact c' io && io == io'
-
-class NFData a => DeepStrict a where
 
 newCNFRef :: DeepStrict a => a -> IO (CNFRef a)
 newCNFRef !a = do r <- newIORef a
