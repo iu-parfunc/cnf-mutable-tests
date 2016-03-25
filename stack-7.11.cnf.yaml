@@ -2,11 +2,15 @@ flags: {}
 extra-package-dbs: []
 packages:
 - '.'
-- deps/compact-fake/
+- deps/compact-indexed/
 system-ghc: true
 extra-deps:
 - atomic-primops-0.8.0.3
 - primitive-0.6.1.0
 - vector-0.11.0.0
+
 compiler-check: newer-minor
-resolver: ghc-7.11
+
+# resolver: ghc-7.11
+# This is the mutable-cnf-0.2 release:
+resolver: ghc-7.11.20160226
