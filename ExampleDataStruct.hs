@@ -10,22 +10,27 @@ module ExampleDataStruct where
 import Data.CNFRef2
 import Data.Compact.Indexed
 
--- import Data.Vector.Unboxed
+import Data.Vector.Unboxed
 
 -- | An IntBox contains an existentially-bound private region:
-data IntBox = forall s . IntBox (CNFRef s Int)
--- ^ FIXME: this should use an unboxed vector, and store an unboxed Int.
---   Storing Ints creates a silly memory leak problem.
+data IntBox = forall s.  IntBox (CNFRef s (Vector Int))
 
-newIntBox :: Int -> IO IntBox
-newIntBox !n = IntBox <$> newCNFRef n
+-- | Create an empty IntBox.
+newIntBox :: IO IntBox
+newIntBox = IntBox <$> newCNFRef empty
 
-writeIntBox :: Int -> IntBox -> IO ()
-writeIntBox !n (IntBox !ref) = do
-  c <- copyToCompact ref n
+-- | Insert a value into the IntBox.
+writeIntBox :: IntBox -> Int -> IO ()
+writeIntBox (IntBox !ref) !n = do
+  !c <- readCNFRef ref
+  let !vec = getCompact c
+      !vec' = snoc vec n
+  !c <- copyToCompact ref vec'
   writeCNFRef ref c
 
-readIntBox :: IntBox -> IO Int
+-- | Read all values from the IntBox.
+readIntBox :: IntBox -> IO [Int]
 readIntBox (IntBox !ref) = do
   !c <- readCNFRef ref
-  return (getCompact c)
+  let !vec = getCompact c
+  return (toList vec)
