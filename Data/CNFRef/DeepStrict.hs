@@ -7,7 +7,8 @@ module Data.CNFRef.DeepStrict where
 
 import Control.DeepSeq
 import Data.IORef
-import Data.Vector.Unboxed (Vector)
+import Data.Vector.Unboxed         (Vector)
+import Data.Vector.Unboxed.Mutable (IOVector)
 import System.IO.Unsafe
 
 instance NFData a => NFData (IORef a) where
@@ -19,3 +20,4 @@ class NFData a => DeepStrict a where
 
 instance DeepStrict Int
 instance DeepStrict (Vector Int)
+instance DeepStrict (IOVector Int)
