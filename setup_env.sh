@@ -3,4 +3,4 @@
 
 PATH=~parfunc/opt/ghc-mutable-cnf-0.2/bin/:$PATH
 
-STACK_YAML=stack-7.11.cnf.yaml
+export STACK_YAML=stack-7.11.cnf.yaml

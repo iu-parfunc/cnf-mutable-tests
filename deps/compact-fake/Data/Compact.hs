@@ -9,13 +9,13 @@ import Control.DeepSeq
 newtype Compact a = Compact a
 
 appendCompact :: NFData a => Compact b -> a -> IO (Compact a)
-appendCompact = undefined
+appendCompact _ x = return (Compact x)
 
 appendCompactNoShare :: NFData a => Compact b -> a -> IO (Compact a)
-appendCompactNoShare = undefined
+appendCompactNoShare _ x = return (Compact x)
 
 getCompact :: Compact a -> a
-getCompact = undefined
+getCompact (Compact a) = a
 
 -- | This one is hard to fake....
 inCompact :: Compact a -> b -> Bool
@@ -29,7 +29,7 @@ isCompact :: a -> Bool
 isCompact = error "isCompact: cannot implement in this dummy implementation"
 
 newCompact :: NFData a => Word -> a -> IO (Compact a)
-newCompact = undefined
+newCompact _ x = return (Compact x)
 
 newCompactNoShare :: NFData a => Word -> a -> IO (Compact a)
-newCompactNoShare = undefined
+newCompactNoShare _ x = return (Compact x)

@@ -13,6 +13,8 @@ import System.IO.Unsafe
 instance NFData a => NFData (IORef a) where
   rnf a = unsafePerformIO $ modifyIORef' a force
 
+-- RRN: Perhaps this implication should go the other way?  Any data
+-- that is DeepStrict should trivially have an NFData instance.
 class NFData a => DeepStrict a where
 
 instance DeepStrict Int
