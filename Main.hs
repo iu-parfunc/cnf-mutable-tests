@@ -17,7 +17,7 @@ import           System.Mem
 
 import qualified ExampleDataStruct as IB
 
--- This is debatable... 
+-- This is debatable...
 -- instance NFData a => NFData (IORef a) where
 --   rnf a = unsafePerformIO $ modifyIORef' a force
 
@@ -113,6 +113,6 @@ test6 = do ib <- IB.newIntBox
 -- FIXME: use tasty / HUnit.
 main :: IO ()
 main =
-  do test1; test2; test3; test4; test5
-
+  do test1; test2; test3; test4
+     -- test5
      test6
