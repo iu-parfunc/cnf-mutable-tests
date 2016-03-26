@@ -15,8 +15,11 @@ import           GHC.Prim
 import           System.IO.Unsafe
 import           System.Mem
 
-instance NFData a => NFData (IORef a) where
-  rnf a = unsafePerformIO $ modifyIORef' a force
+import qualified ExampleDataStruct as IB
+
+-- This is debatable... 
+-- instance NFData a => NFData (IORef a) where
+--   rnf a = unsafePerformIO $ modifyIORef' a force
 
 instance NFData a => NFData (MutVar RealWorld a) where
   rnf a = unsafePerformIO $ modifyMutVar' a force
@@ -96,5 +99,20 @@ test5 = do x :: V.IOVector Int <- V.new 5
            z :: [Int] <- readV (getCompact c')
            print z
 
+
+test6 :: IO ()
+test6 = do ib <- IB.newIntBox
+           IB.writeIntBox ib 33
+           IB.writeIntBox ib 44
+           n <- IB.readIntBox ib
+           -- Assert n==44
+           putStrLn "test6:"
+           print n
+           putStrLn "test6 complete"
+
+-- FIXME: use tasty / HUnit.
 main :: IO ()
-main = test1 >> test2 >> test3 >> test4 >> test5
+main =
+  do test1; test2; test3; test4; test5
+
+     test6
