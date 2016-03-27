@@ -5,21 +5,19 @@
 
 module Main where
 
-import           Control.DeepSeq
+import Control.DeepSeq
+import GHC.Prim
+import System.IO.Unsafe
+import System.Mem
+import Test.Tasty
+import Test.Tasty.HUnit
+
 import           Data.Compact
+import qualified Data.IntBox                 as IB
 import           Data.IORef
 import           Data.Primitive.MutVar
 import qualified Data.Vector.Mutable         as V
 import qualified Data.Vector.Unboxed.Mutable as U
-import           GHC.Prim
-import           System.IO.Unsafe
-import           System.Mem
-
-import qualified Data.IntBox as IB
-
--- This is debatable...
--- instance NFData a => NFData (IORef a) where
---   rnf a = unsafePerformIO $ modifyIORef' a force
 
 instance NFData a => NFData (MutVar RealWorld a) where
   rnf a = unsafePerformIO $ modifyMutVar' a force
@@ -55,64 +53,84 @@ readU a = go a 0 (U.length a)
                             return (x:xs)
                     else return []
 
-test1 :: IO ()
-test1 = do c <- newCompact 64 (42 :: Int)
-           c' <- appendCompact c (21 :: Int)
-           let x = getCompact c'
-           print x
+tests :: TestTree
+tests =
+    testGroup
+        "Tests"
+        [ compactTests
+        , iorefTests
+        , mutvarTests
+        , uiovectorTests
+        , intboxTests
+        -- crashes
+        , iovectorTests]
 
-test2 :: IO ()
-test2 = do x <- newIORef (42 :: Int)
-           c <- newCompact 64 x
-           y <- newIORef (21 :: Int)
-           c' <- appendCompact c y
-           z <- readIORef $ getCompact c'
-           print z
+compactTests =
+    testGroup
+        "Pure value in a compact"
+        [ testCase "Int in a compact" $
+          do c <- newCompact 64 (42 :: Int)
+             c' <- appendCompact c (21 :: Int)
+             let x = getCompact c'
+             x @=? 21]
 
-test3 :: IO ()
-test3 = do x <- newMutVar (42 :: Int)
-           c <- newCompact 64 x
-           y <- newMutVar (21 :: Int)
-           c' <- appendCompact c y
-           z <- readMutVar $ getCompact c'
-           print z
+iorefTests =
+    testGroup
+        "IORef in a compact"
+        [ testCase "IORef Int in a compact" $
+          do x <- newIORef (42 :: Int)
+             c <- newCompact 64 x
+             y <- newIORef (21 :: Int)
+             c' <- appendCompact c y
+             z <- readIORef $ getCompact c'
+             z @=? 21]
 
-test4 :: IO ()
-test4 = do x :: U.IOVector Int <- U.new 5
-           _ <- U.set x 42
-           c <- newCompact 64 x
-           y <- U.new 5
-           _ <- U.set y 21
-           c' <- appendCompact c y
-           z :: [Int] <- readU (getCompact c')
-           print z
+mutvarTests =
+    testGroup
+        "MutVar in a compact"
+        [ testCase "MutVar Int in a compact" $
+          do x <- newMutVar (42 :: Int)
+             c <- newCompact 64 x
+             y <- newMutVar (21 :: Int)
+             c' <- appendCompact c y
+             z <- readMutVar $ getCompact c'
+             z @=? 21]
 
-test5 :: IO ()
-test5 = do x :: V.IOVector Int <- V.new 5
-           _ <- V.set x 42
-           _ <- printV x
-           _ <- performMajorGC
-           c <- newCompact 64 x
-           y <- V.new 5
-           _ <- V.set y 21
-           c' <- appendCompact c y
-           z :: [Int] <- readV (getCompact c')
-           print z
+uiovectorTests =
+    testGroup
+        "Unboxed Mutable Vector in a compact"
+        [ testCase "U.IOVector Int in a compact" $
+          do x :: U.IOVector Int <- U.new 5
+             _ <- U.set x 42
+             c <- newCompact 64 x
+             y <- U.new 5
+             _ <- U.set y 21
+             c' <- appendCompact c y
+             z :: [Int] <- readU (getCompact c')
+             z @=? replicate 5 21]
 
+iovectorTests =
+    testGroup
+        "Boxed Mutable Vector in a compact"
+        [ testCase "V.IOVector Int in a compact" $
+          do x :: V.IOVector Int <- V.new 5
+             _ <- V.set x 42
+             c <- newCompact 64 x
+             y <- V.new 5
+             _ <- V.set y 21
+             c' <- appendCompact c y
+             z :: [Int] <- readV (getCompact c')
+             z @=? replicate 5 21]
 
-test6 :: IO ()
-test6 = do ib <- IB.newIntBox
-           IB.writeIntBox ib 33
-           IB.writeIntBox ib 44
-           n <- IB.readIntBox ib
-           -- Assert n==44
-           putStrLn "test6:"
-           print n
-           putStrLn "test6 complete"
+intboxTests =
+    testGroup
+        "IntBox"
+        [ testCase "IntBox" $
+          do ib <- IB.newIntBox
+             IB.writeIntBox ib 42
+             IB.writeIntBox ib 21
+             n <- IB.readIntBox ib
+             n @=? [42, 21]]
 
--- FIXME: use tasty / HUnit.
 main :: IO ()
-main =
-  do test1; test2; test3; test4
-     -- test5
-     test6
+main = defaultMain tests
