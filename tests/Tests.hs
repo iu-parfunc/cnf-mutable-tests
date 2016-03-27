@@ -15,7 +15,7 @@ import           GHC.Prim
 import           System.IO.Unsafe
 import           System.Mem
 
-import qualified ExampleDataStruct as IB
+import qualified Data.IntBox as IB
 
 -- This is debatable...
 -- instance NFData a => NFData (IORef a) where

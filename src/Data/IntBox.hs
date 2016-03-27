@@ -5,9 +5,9 @@
 
 -- | An example data structure using CNFRef
 
-module ExampleDataStruct where
+module Data.IntBox where
 
-import Data.CNFRef2
+import Data.CNFRef
 import Data.Compact.Indexed
 import Data.Traversable
 import Data.Vector.Unboxed.Mutable as V

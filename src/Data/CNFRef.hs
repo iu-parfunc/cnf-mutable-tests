@@ -1,6 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 
-module Data.CNFRef2
+module Data.CNFRef
        ( CNFRef(..) -- Transparent for now...
        , copyToCompact
        , newCNFRef
