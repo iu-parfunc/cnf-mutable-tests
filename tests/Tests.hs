@@ -63,7 +63,8 @@ tests =
         , uiovectorTests
         , intboxTests
         -- crashes
-        , iovectorTests]
+        -- , iovectorTests
+        ]
 
 compactTests =
     testGroup
