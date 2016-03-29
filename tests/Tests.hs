@@ -131,7 +131,7 @@ intboxTests =
         "IntBox"
         [ testCase "IntBox" $
           do ib <- newIntBox
-             let vs :: [Int] = [1 .. 100]
+             let vs :: [Int] = [1 .. 10]
              forM_ vs $ writeIntBox ib
              n <- readIntBox ib
              n @?= vs]
@@ -152,7 +152,7 @@ clistTests =
              n @?= []]
   where
     vs :: [Int]
-    vs = [1 .. 100]
+    vs = [1 .. 10]
 
 main :: IO ()
 main = defaultMain tests
