@@ -13,6 +13,7 @@ import System.Mem
 import Test.Tasty
 import Test.Tasty.HUnit
 
+import           Data.CList                  as CL
 import           Data.Compact
 import           Data.IntBox                 as IB
 import           Data.IORef
@@ -63,6 +64,7 @@ tests =
         , mutvarTests
         , uiovectorTests
         , intboxTests
+        , clistTests
         -- crashes
         -- , iovectorTests
         ]
@@ -133,6 +135,24 @@ intboxTests =
              forM_ vs $ writeIntBox ib
              n <- readIntBox ib
              n @?= vs]
+
+clistTests =
+    testGroup
+        "CList"
+        [ testCase "writeCList" $
+          do cl <- newCList
+             forM_ vs $ writeCList cl
+             n <- readCList cl
+             n @?= vs
+        , testCase "popCList" $
+          do cl <- newCList
+             forM_ vs $ writeCList cl
+             forM_ vs . const $ popCList cl
+             n <- readCList cl
+             n @?= []]
+  where
+    vs :: [Int]
+    vs = [1 .. 100]
 
 main :: IO ()
 main = defaultMain tests
