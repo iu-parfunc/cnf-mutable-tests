@@ -6,6 +6,7 @@
 module Main where
 
 import Control.DeepSeq
+import Data.Foldable
 import GHC.Prim
 import System.IO.Unsafe
 import System.Mem
@@ -13,7 +14,7 @@ import Test.Tasty
 import Test.Tasty.HUnit
 
 import           Data.Compact
-import qualified Data.IntBox                 as IB
+import           Data.IntBox                 as IB
 import           Data.IORef
 import           Data.Primitive.MutVar
 import qualified Data.Vector.Mutable         as V
@@ -73,7 +74,7 @@ compactTests =
           do c <- newCompact 64 (42 :: Int)
              c' <- appendCompact c (21 :: Int)
              let x = getCompact c'
-             x @=? 21]
+             x @?= 21]
 
 iorefTests =
     testGroup
@@ -84,7 +85,7 @@ iorefTests =
              y <- newIORef (21 :: Int)
              c' <- appendCompact c y
              z <- readIORef $ getCompact c'
-             z @=? 21]
+             z @?= 21]
 
 mutvarTests =
     testGroup
@@ -95,7 +96,7 @@ mutvarTests =
              y <- newMutVar (21 :: Int)
              c' <- appendCompact c y
              z <- readMutVar $ getCompact c'
-             z @=? 21]
+             z @?= 21]
 
 uiovectorTests =
     testGroup
@@ -108,7 +109,7 @@ uiovectorTests =
              _ <- U.set y 21
              c' <- appendCompact c y
              z :: [Int] <- readU (getCompact c')
-             z @=? replicate 5 21]
+             z @?= replicate 5 21]
 
 iovectorTests =
     testGroup
@@ -121,17 +122,17 @@ iovectorTests =
              _ <- V.set y 21
              c' <- appendCompact c y
              z :: [Int] <- readV (getCompact c')
-             z @=? replicate 5 21]
+             z @?= replicate 5 21]
 
 intboxTests =
     testGroup
         "IntBox"
         [ testCase "IntBox" $
-          do ib <- IB.newIntBox
-             IB.writeIntBox ib 42
-             IB.writeIntBox ib 21
-             n <- IB.readIntBox ib
-             n @=? [42, 21]]
+          do ib <- newIntBox
+             let vs :: [Int] = [1 .. 100]
+             forM_ vs $ writeIntBox ib
+             n <- readIntBox ib
+             n @?= vs]
 
 main :: IO ()
 main = defaultMain tests
