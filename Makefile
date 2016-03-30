@@ -14,10 +14,11 @@ SUBMOD_SHA = 14302c4be0f6a2fc1e66a8db59a224dfef1bb723
 PREFIX ?= $(HOME)/opt/ghc-mutable-cnf-$(MUTABLECNF_VER)
 GHC ?= $(PREFIX)/bin/ghc
 CABAL ?= cabal
+STACK ?= stack
 JOBS ?=
 SRC = $(wildcard *.hs)
 
-.PHONY: all docker clean pull exe ghc
+.PHONY: all docker clean pull exe ghc test
 
 all: exe
 
@@ -50,6 +51,9 @@ exe: $(GHC) $(SRC)
 	$(CABAL) install -w $(GHC) --only-dep
 	$(CABAL) configure -w $(GHC) --enable-tests
 	$(CABAL) build
+
+test:
+	$(STACK) test
 
 clean:
 	$(CABAL) clean

@@ -5,26 +5,31 @@
 
 -- | An example data structure using CNFRef
 
-module ExampleDataStruct where
+module Data.IntBox where
 
-import Data.CNFRef2
+import Data.CNFRef
 import Data.Compact.Indexed
-
-import Data.Vector.Unboxed
+import Data.Traversable
+import Data.Vector.Unboxed.Mutable as V
 
 -- | An IntBox contains an existentially-bound private region:
-data IntBox = forall s.  IntBox (CNFRef s (Vector Int))
+data IntBox = forall s.  IntBox (CNFRef s (IOVector Int))
 
 -- | Create an empty IntBox.
 newIntBox :: IO IntBox
-newIntBox = IntBox <$> newCNFRef empty
+newIntBox = do
+  !vec <- unsafeNew 0
+  !c <- newCNFRef vec
+  return $ IntBox c
 
 -- | Insert a value into the IntBox.
 writeIntBox :: IntBox -> Int -> IO ()
 writeIntBox (IntBox !ref) !n = do
   !c <- readCNFRef ref
   let !vec = getCompact c
-      !vec' = snoc vec n
+      !len = V.length vec
+  !vec' <- grow vec 1
+  unsafeWrite vec' len n
   !c <- copyToCompact ref vec'
   writeCNFRef ref c
 
@@ -33,4 +38,5 @@ readIntBox :: IntBox -> IO [Int]
 readIntBox (IntBox !ref) = do
   !c <- readCNFRef ref
   let !vec = getCompact c
-  return (toList vec)
+      !len = V.length vec
+  forM [0 .. len - 1] $ unsafeRead vec

@@ -1,0 +1,49 @@
+name:                cnf-mutable
+version:             0.1.0.0
+-- synopsis:
+description:         Mutable objects in CNF
+-- license:
+license-file:        LICENSE
+author:              Vikraman Choudhury
+maintainer:          git@vikraman.org
+-- copyright:
+-- category:
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+library
+  exposed-modules:     Data.CNFRef
+                     , Data.CNFRef.Simple
+                     , Data.CNFRef.DeepStrict
+                     , Data.CNFRef.Internal
+                     , Data.IntBox
+                     , Data.CList
+  build-depends:       base >=4.8 && <4.9
+                     , deepseq >=1.4 && <1.5
+                     , compact >=1.0
+                     , compact-indexed
+                     , atomic-primops >=0.8.0.2 && <0.9.0.0
+                     , ghc-prim >=0.4.0.0 && <0.5.0.0
+                     , vector >= 0.11 && <0.12
+  hs-source-dirs:      src
+  ghc-options:         -O2 -Wall
+  default-language:    Haskell2010
+
+test-suite tests
+  type:                exitcode-stdio-1.0
+  main-is:             Tests.hs
+  -- other-modules:
+  build-depends:       base >=4.8 && <4.9
+                     , deepseq >=1.4 && <1.5
+                     , compact >= 1.0
+                     , compact-indexed
+                     , vector >= 0.11 && <0.12
+                     , primitive >=0.6.1 && <0.7
+                     , ghc-prim >=0.4.0.0 && <0.5.0.0
+                     , cnf-mutable
+                     , tasty >=0.11 && <0.12
+                     , tasty-hunit >=0.9 && <0.10
+  hs-source-dirs:      tests
+  ghc-options:         -O2 -Wall
+  default-language:    Haskell2010
