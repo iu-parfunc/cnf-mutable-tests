@@ -17,8 +17,14 @@ import Data.Compact.Indexed
 import Data.IORef
 
 newtype CNFRef s a = CNFRef (Compact s (IORef a))
+-- RRN: I've had a change of heart, I think this should just be an alias:
+-- type CNFRef s a = Compact s (IORef a)
 
 -- | Copy a new value to the same compact region as the CNFRef.
+-- 
+--  (RRN) This could be obsoleted by a function of type (CNFRef s a ->
+--  Compact s ()) but I'm not sure even that would be safe at the
+--  moment.  Having a separate `Block` type is a better idea.
 copyToCompact :: DeepStrict a => CNFRef s a -> a -> IO (Compact s a)
 copyToCompact (CNFRef !c) !a = appendCompact c a  -- This will leak if
                                                   -- a is not unboxed.
