@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE StrictData   #-}
 
 module Data.CNFRef
        ( CNFRef(..) -- Transparent for now...
@@ -21,7 +22,7 @@ newtype CNFRef s a = CNFRef (Compact s (IORef a))
 -- type CNFRef s a = Compact s (IORef a)
 
 -- | Copy a new value to the same compact region as the CNFRef.
--- 
+--
 --  (RRN) This could be obsoleted by a function of type (CNFRef s a ->
 --  Compact s ()) but I'm not sure even that would be safe at the
 --  moment.  Having a separate `Block` type is a better idea.

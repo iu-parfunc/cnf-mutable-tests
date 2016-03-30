@@ -3,6 +3,7 @@
 {-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE NamedFieldPuns            #-}
 {-# LANGUAGE StandaloneDeriving        #-}
+{-# LANGUAGE StrictData                #-}
 
 -- | A linked-list like data structure in a compact
 
