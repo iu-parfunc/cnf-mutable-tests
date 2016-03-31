@@ -18,6 +18,10 @@ import Data.Vector.Unboxed.Mutable as U
 
 -- RRN: Perhaps this implication should go the other way?  Any data
 -- that is DeepStrict should trivially have an NFData instance.
+-- VC: But Compact requires NFData.
+-- instance DeepStrict a => NFData a
+-- will result in overlapping instances.
+-- This can be done in a better way using IntrinsicSuperclasses.
 class NFData a => DeepStrict a where
 
 -- DeepStrict instances
