@@ -1,5 +1,6 @@
 {-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- | A hypothetical typeclass to track transitive strictness.
 -- I.e. datatypes whose values cannot contain (reach) a thunk.
