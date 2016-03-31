@@ -14,6 +14,7 @@ module Data.CNFRef
 
 import Control.DeepSeq
 import Data.CNFRef.DeepStrict
+import Data.CNFRef.Internal
 import Data.Compact.Indexed
 import Data.IORef
 
@@ -35,8 +36,7 @@ copyToCompact (CNFRef !c) !a = appendCompact c a  -- This will leak if
 newCNFRef :: DeepStrict a => a -> IO (CNFRef s a)
 newCNFRef !a = do
   !ref <- newIORef a
-  -- what's the correct size?
-  let sz = 4096
+  let sz = unsafeSizeof ref
   !c <- newCompact sz ref
   return $! CNFRef c
 
