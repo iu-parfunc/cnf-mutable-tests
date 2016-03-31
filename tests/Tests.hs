@@ -1,4 +1,3 @@
-{-# LANGUAGE BangPatterns         #-}
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE TypeSynonymInstances #-}
@@ -20,16 +19,6 @@ import           Data.IORef
 import           Data.Primitive.MutVar
 import qualified Data.Vector.Mutable         as V
 import qualified Data.Vector.Unboxed.Mutable as U
-
-instance NFData a => NFData (MutVar RealWorld a) where
-  rnf a = unsafePerformIO $ modifyMutVar' a force
-
-instance NFData a => NFData (V.IOVector a) where
-  rnf a = unsafePerformIO $ modifyIOVector' a force
-    where modifyIOVector' !a !f = go' a f 0 (V.length a)
-          go' !a !f !i !l = if i < l
-                               then V.unsafeModify a f i >>= \ !_ -> go' a f (i + 1) l
-                               else return ()
 
 printV :: Show a => V.IOVector a -> IO ()
 printV a = go 0 (V.length a)
