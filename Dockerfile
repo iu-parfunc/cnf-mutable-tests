@@ -1,10 +1,9 @@
-FROM fpco/stack-build:lts-4.2
+FROM vikraman/ghc-mutable-cnf
 
-ADD Makefile Main.hs cnf-mutable-tests/
+ADD . /root/cnf-mutable-tests
+WORKDIR /root/cnf-mutable-tests
 
-WORKDIR cnf-mutable-tests
+ENV STACK_YAML stack-7.11.cnf.yaml
 
-RUN cabal update
-
-# ARG JOBS
-RUN make -j  all
+RUN stack build
+RUN stack test
