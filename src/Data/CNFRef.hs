@@ -5,6 +5,7 @@ module Data.CNFRef
        ( CNFRef(..) -- Transparent for now...
        , copyToCompact
        , newCNFRef
+       , appendCNFRef
        , readCNFRef
        , writeCNFRef
        -- , modifyCNFRef
@@ -39,6 +40,14 @@ newCNFRef !a = do
   let sz = unsafeSizeof ref
   !c <- newCompact sz ref
   return $! CNFRef c
+
+-- | Append a boxed value into an existing CNFRef and return a new
+-- CNFRef that points to it.
+appendCNFRef :: DeepStrict b => CNFRef s a -> b -> IO (CNFRef s b)
+appendCNFRef (CNFRef !c) !b = do
+  !ref' <- newIORef b
+  !c' <- appendCompact c ref'
+  return $! CNFRef c'
 
 -- | Read the contents of the CNFRef, but don't lose track of the fact
 --   that the value lives in the same compact region as the reference
