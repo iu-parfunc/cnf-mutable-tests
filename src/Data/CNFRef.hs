@@ -28,9 +28,9 @@ newtype CNFRef s a = CNFRef (Compact s (IORef a))
 --  (RRN) This could be obsoleted by a function of type (CNFRef s a ->
 --  Compact s ()) but I'm not sure even that would be safe at the
 --  moment.  Having a separate `Block` type is a better idea.
-copyToCompact :: DeepStrict a => CNFRef s a -> a -> IO (Compact s a)
-copyToCompact (CNFRef !c) !a = appendCompact c a  -- This will leak if
-                                                  -- a is not unboxed.
+copyToCompact :: DeepStrict b => CNFRef s a -> b -> IO (Compact s b)
+copyToCompact (CNFRef !c) !b = appendCompact c b  -- This will leak if
+                                                  -- b is not unboxed.
 
 -- | Copy a boxed value into a compact region and create a new CNFRef
 -- that points to it.
