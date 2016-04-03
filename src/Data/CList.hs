@@ -30,9 +30,7 @@ data CList a = forall s. CList { rootList :: MList s a -- ^ pointer to root list
 newCList :: DeepStrict a => IO (CList a)
 newCList = do
   root <- newCNFRef Nil
-  free <- newCNFRef Nil
-  -- FIXME:
-  -- free <- appendCNFRef root Nil
+  free <- appendCNFRef root Nil
   return $ CList root free
 
 -- | Read out a CList
