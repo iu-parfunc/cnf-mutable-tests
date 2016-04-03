@@ -173,7 +173,11 @@ mlistTests =
 clistTests =
     testGroup
         "CList"
-        [ testCase "writeCList" $
+        [ testCase "newCList" $
+          do cl :: CList Int <- newCList
+             n <- readCList cl
+             n @?= []
+        , testCase "writeCList" $
           do cl <- newCList
              forM_ vs $ writeCList cl
              n <- readCList cl
