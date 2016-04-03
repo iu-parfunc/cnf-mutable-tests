@@ -31,6 +31,11 @@ instance DeepStrict a => DeepStrict (List a)
 -- | A cons-list in a mutable compact region
 type MList s a = CNFRef s (List a)
 
+-- | Write a new value into an IORef, after strictly evaluating
+-- it. This is the only place where laziness bites us.
+writeIORef' :: DeepStrict a => IORef a -> a -> IO ()
+writeIORef' ref a = a `deepseq` writeIORef ref a
+
 -- | Create new singleton vector
 newVec :: Unbox a => a -> IO (IOVector a)
 newVec a = do
@@ -94,7 +99,7 @@ updateMList m a = do
         Nil -> do
           vec <- newVec a
           ref <- newIORef Nil
-          writeIORef prev $ Cons vec ref
+          writeIORef' prev $ Cons vec ref
         Cons vec next -> do
           v <- readVec vec
           unless (v == a) $ go next
@@ -127,7 +132,7 @@ writeMList m l = do
     go prev = do
       cur <- readIORef prev
       case cur of
-        Nil         -> writeIORef prev $ getCompact l
+        Nil         -> writeIORef' prev $ getCompact l
         Cons _ next -> go next
 
 -- | Drop a value from an MList
@@ -168,7 +173,7 @@ dropMList m a = do
           v <- readVec vec
           if v == a
             then do
-              writeIORef pprev cur
+              writeIORef' pprev cur
               return prev
             else newIORef Nil
         Cons _ ref -> do
@@ -176,7 +181,7 @@ dropMList m a = do
           v <- readVec vec
           if v == a
             then do
-              writeIORef pprev cur
+              writeIORef' pprev cur
               return prev
             else go prev ref
 
@@ -203,6 +208,6 @@ popMList m = do
         Nil -> do
           Cons vec _ <- readIORef pprev
           a <- readVec vec
-          writeIORef pprev Nil
+          writeIORef' pprev Nil
           return $ Just a
         Cons _ ref -> go prev ref
