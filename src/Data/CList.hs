@@ -1,6 +1,4 @@
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE GADTs                     #-}
-{-# LANGUAGE NamedFieldPuns            #-}
 {-# LANGUAGE RecordWildCards           #-}
 {-# LANGUAGE StrictData                #-}
 
@@ -24,10 +22,11 @@ import Data.IORef
 import Data.Vector.Unboxed.Mutable
 
 -- | A compact list
-data CList a = forall s. CList { rootList :: MList s a -- ^ root
-                               , freeList :: MList s a -- ^ free
+data CList a = forall s. CList { rootList :: MList s a -- ^ pointer to root list
+                               , freeList :: MList s a -- ^ pointer to free list
                                }
 
+-- | Create a new CList
 newCList :: DeepStrict a => IO (CList a)
 newCList = do
   root <- newCNFRef Nil
@@ -36,9 +35,11 @@ newCList = do
   -- free <- appendCNFRef root Nil
   return $ CList root free
 
+-- | Read out a CList
 readCList :: (DeepStrict a, Unbox a) => CList a -> IO [a]
 readCList CList { .. } = readMList rootList
 
+-- | Write a new value at the end of the CList
 writeCList :: (DeepStrict a, Unbox a, Eq a) => CList a -> a -> IO ()
 writeCList CList { .. } a = do
   c <- dropMList freeList a
@@ -51,6 +52,7 @@ writeCList CList { .. } a = do
     Cons _ _ ->
       writeMList rootList c
 
+-- | Drop the value at the end of the CList
 popCList :: (DeepStrict a, Unbox a, Eq a) => CList a -> IO (Maybe a)
 popCList CList { .. } = do
   v <- popMList rootList
@@ -59,6 +61,7 @@ popCList CList { .. } = do
     Nothing -> return ()
   return v
 
+-- | Return the total size of the CList (including free list)
 sizeCList :: (DeepStrict a, Unbox a) => CList a -> IO Int
 sizeCList CList { .. } =
   liftM2 (+) (lengthMList rootList) (lengthMList freeList)

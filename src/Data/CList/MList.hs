@@ -3,7 +3,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE StrictData         #-}
 
--- | A cons-list in a mutable compact region
+-- | A cons-list like data structure in a mutable compact region
 
 module Data.CList.MList where
 
@@ -28,20 +28,25 @@ deriving instance Generic (List a)
 instance NFData a => NFData (List a)
 instance DeepStrict a => DeepStrict (List a)
 
+-- | A cons-list in a mutable compact region
 type MList s a = CNFRef s (List a)
 
+-- | Create new singleton vector
 newVec :: Unbox a => a -> IO (IOVector a)
 newVec a = do
   vec <- unsafeNew 1
   unsafeWrite vec 0 a
   return vec
 
+-- | Read the singleton in the vector
 readVec :: Unbox a => IOVector a -> IO a
 readVec vec = unsafeRead vec 0
 
+-- | Update the singleton value in the vector
 writeVec :: Unbox a => IOVector a -> a -> IO ()
 writeVec vec = unsafeWrite vec 0
 
+-- | Return length of the MList
 lengthMList :: (DeepStrict a, Unbox a) => MList s a -> IO Int
 lengthMList m = do
   c <- readCNFRef m
@@ -54,6 +59,7 @@ lengthMList m = do
       l <- go as
       return $ V.length vec + l
 
+-- | Read out all values in the MList
 readMList :: (DeepStrict a, Unbox a) => MList s a -> IO [a]
 readMList l = do
   c <- readCNFRef l
@@ -67,6 +73,7 @@ readMList l = do
       as <- go p
       return $ a : as
 
+-- | Insert a value into a MList if it doesn't already exist
 updateMList :: (DeepStrict a, Unbox a, Eq a) => MList s a -> a -> IO ()
 updateMList m a = do
   c <- readCNFRef m
@@ -92,6 +99,7 @@ updateMList m a = do
           v <- readVec vec
           unless (v == a) $ go next
 
+-- | Find a value inside an MList
 findMList :: (DeepStrict a, Unbox a, Eq a) => MList s a -> a -> IO (Compact s (List a))
 findMList l a = readCNFRef l >>= go
   where
@@ -107,6 +115,7 @@ findMList l a = readCNFRef l >>= go
               c' <- appendCompact c p
               go c'
 
+-- | Append a List at the end of an MList
 writeMList :: DeepStrict a => MList s a -> Compact s (List a) -> IO ()
 writeMList m l = do
   c <- readCNFRef m
@@ -121,6 +130,7 @@ writeMList m l = do
         Nil         -> writeIORef prev $ getCompact l
         Cons _ next -> go next
 
+-- | Drop a value from an MList
 dropMList :: (DeepStrict a, Unbox a, Eq a) => MList s a -> a -> IO (Compact s (List a))
 dropMList m a = do
   c <- readCNFRef m
@@ -170,6 +180,7 @@ dropMList m a = do
               return prev
             else go prev ref
 
+-- | Drop the last value in the MList
 popMList :: (DeepStrict a, Unbox a) => MList s a -> IO (Maybe a)
 popMList m = do
   c <- readCNFRef m

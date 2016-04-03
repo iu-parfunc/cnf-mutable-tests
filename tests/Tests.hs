@@ -1,14 +1,9 @@
-{-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE ScopedTypeVariables  #-}
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies        #-}
 
 module Main where
 
-import Control.DeepSeq
 import Data.Foldable
-import GHC.Prim
-import System.IO.Unsafe
-import System.Mem
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -24,27 +19,30 @@ import qualified Data.Vector.Unboxed.Mutable as U
 
 printV :: Show a => V.IOVector a -> IO ()
 printV a = go 0 (V.length a)
-  where go i l = if i < l
-                    then do x <- V.read a i
-                            print x
-                            go (i + 1) l
-                    else return ()
+  where go i l =
+          if i < l
+             then do x <- V.read a i
+                     print x
+                     go (i + 1) l
+             else return ()
 
 readV :: V.IOVector a -> IO [a]
-readV a = go a 0 (V.length a)
-  where go a i l = if i < l
-                    then do x <- V.read a i
-                            xs <- go a (i + 1) l
-                            return (x:xs)
-                    else return []
+readV a = go 0 (V.length a)
+  where go i l =
+          if i < l
+             then do x <- V.read a i
+                     xs <- go (i + 1) l
+                     return (x : xs)
+             else return []
 
 readU :: U.Unbox a => U.IOVector a -> IO [a]
-readU a = go a 0 (U.length a)
-  where go a i l = if i < l
-                    then do x <- U.read a i
-                            xs <- go a (i + 1) l
-                            return (x:xs)
-                    else return []
+readU a = go 0 (U.length a)
+  where go i l =
+          if i < l
+             then do x <- U.read a i
+                     xs <- go (i + 1) l
+                     return (x : xs)
+             else return []
 
 tests :: TestTree
 tests =
