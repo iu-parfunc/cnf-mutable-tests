@@ -6,6 +6,7 @@ module Data.CNFRef
        , copyToCompact
        , newCNFRef
        , appendCNFRef
+       , appendCNFRefNoShare
        , readCNFRef
        , writeCNFRef
        -- , modifyCNFRef
@@ -47,6 +48,14 @@ appendCNFRef :: DeepStrict b => CNFRef s a -> b -> IO (CNFRef s b)
 appendCNFRef (CNFRef !c) !b = do
   !ref' <- newIORef b
   !c' <- appendCompact c ref'
+  return $! CNFRef c'
+
+-- | Append a boxed value into an existing CNFRef, without sharing,
+-- and return a new CNFRef that points to it.
+appendCNFRefNoShare :: DeepStrict b => CNFRef s a -> b -> IO (CNFRef s b)
+appendCNFRefNoShare (CNFRef !c) !b = do
+  !ref' <- newIORef b
+  !c' <- appendCompactNoShare c ref'
   return $! CNFRef c'
 
 -- | Read the contents of the CNFRef, but don't lose track of the fact
