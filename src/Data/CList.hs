@@ -2,18 +2,13 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE NamedFieldPuns            #-}
+{-# LANGUAGE RecordWildCards           #-}
 {-# LANGUAGE StandaloneDeriving        #-}
 {-# LANGUAGE StrictData                #-}
 
 -- | A linked-list like data structure in a compact
 
-module Data.CList (
-    CList,
-    newCList,
-    readCList,
-    writeCList,
-    popCList,
-    ) where
+module Data.CList where
 
 import Control.DeepSeq
 import Data.CNFRef
