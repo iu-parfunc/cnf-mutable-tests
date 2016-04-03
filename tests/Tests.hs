@@ -13,6 +13,7 @@ import Test.Tasty
 import Test.Tasty.HUnit
 
 import           Data.CList                  as CL
+import           Data.CList.MList            as ML
 import           Data.CNFRef
 import           Data.Compact
 import           Data.IntBox                 as IB
@@ -185,11 +186,11 @@ clistTests =
              forM_ vs . const $ popCList cl
              n <- readCList cl
              n @?= []
-        , testCase "lengthCList" $
+        , testCase "sizeCList" $
           do cl <- newCList
              forM_ vs $ writeCList cl
              forM_ vs . const $ popCList cl
-             n <- lengthCList cl
+             n <- sizeCList cl
              n @?= length ws]
 
   where

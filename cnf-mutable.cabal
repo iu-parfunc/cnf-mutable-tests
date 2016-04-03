@@ -19,6 +19,7 @@ library
                      , Data.CNFRef.Internal
                      , Data.IntBox
                      , Data.CList
+                     , Data.CList.MList
   build-depends:       base >=4.8 && <4.9
                      , deepseq >=1.4 && <1.5
                      , compact >=1.0
