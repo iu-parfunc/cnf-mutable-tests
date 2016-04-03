@@ -11,6 +11,7 @@
 module Data.CList where
 
 import Control.DeepSeq
+import Control.Monad
 import Data.CNFRef
 import Data.CNFRef.DeepStrict
 import Data.Compact.Indexed
@@ -30,68 +31,212 @@ deriving instance Generic (List a)
 instance NFData a => NFData (List a)
 instance DeepStrict a => DeepStrict (List a)
 
+type MList s a = CNFRef s (List a)
+
 -- | A compact list
-data CList a = forall s. CList { rootList :: CNFRef s (List a) -- ^ root
-                               , freeList :: CNFRef s (List a) -- ^ free
+data CList a = forall s. CList { rootList :: MList s a -- ^ root
+                               , freeList :: MList s a -- ^ free
                                }
 
-newCList :: DeepStrict a => IO (CList a)
-newCList = do
-  r <- newCNFRef Nil
-  f <- newCNFRef Nil
-  return $ CList r f
+newVec :: Unbox a => a -> IO (IOVector a)
+newVec a = do
+  vec <- unsafeNew 1
+  unsafeWrite vec 0 a
+  return vec
 
-readCList :: (DeepStrict a, Unbox a) => CList a -> IO [a]
-readCList CList { rootList } = do
-  c <- readCNFRef rootList
-  go (getCompact c)
+readVec :: Unbox a => IOVector a -> IO a
+readVec vec = unsafeRead vec 0
+
+writeVec :: Unbox a => IOVector a -> a -> IO ()
+writeVec vec = unsafeWrite vec 0
+
+lengthMList :: (DeepStrict a, Unbox a) => MList s a -> IO Int
+lengthMList m = do
+  c <- readCNFRef m
+  go $ getCompact c
+
+  where
+    go Nil = return 0
+    go (Cons vec ref) = do
+      as <- readIORef ref
+      l <- go as
+      return $ V.length vec + l
+
+readMList :: (DeepStrict a, Unbox a) => MList s a -> IO [a]
+readMList l = do
+  c <- readCNFRef l
+  go $ getCompact c
 
   where
     go Nil = return []
     go (Cons vec ref) = do
-      a <- unsafeRead vec 0
-      l <- readIORef ref
-      as <- go l
-      return (a : as)
+      a <- readVec vec
+      p <- readIORef ref
+      as <- go p
+      return $ a : as
 
-writeCList :: (DeepStrict a, Unbox a) => CList a -> a -> IO ()
-writeCList CList { rootList } a = do
-  c <- readCNFRef rootList
-  vec' <- unsafeNew 1
-  unsafeWrite vec' 0 a
-  ref' <- newIORef Nil
-  let l = Cons vec' ref'
+updateMList :: (DeepStrict a, Unbox a, Eq a) => MList s a -> a -> IO ()
+updateMList m a = do
+  c <- readCNFRef m
   case getCompact c of
     Nil -> do
-      c' <- copyToCompact rootList l
-      writeCNFRef rootList c'
+      vec <- newVec a
+      ref <- newIORef Nil
+      c' <- copyToCompact m $ Cons vec ref
+      writeCNFRef m c'
     Cons vec ref -> do
-      p <- readIORef ref
-      go ref p l
+      v <- readVec vec
+      unless (v == a) $ go ref
 
   where
-    go prev Nil l = writeIORef prev l
-    go prev (Cons vec ref) l = do
-      p <- readIORef ref
-      go ref p l
+    go prev = do
+      cur <- readIORef prev
+      case cur of
+        Nil -> do
+          vec <- newVec a
+          ref <- newIORef Nil
+          writeIORef prev $ Cons vec ref
+        Cons vec next -> do
+          v <- readVec vec
+          unless (v == a) $ go next
 
-popCList :: DeepStrict a => CList a -> IO ()
-popCList CList { rootList } = do
-  c <- readCNFRef rootList
+findMList :: (DeepStrict a, Unbox a, Eq a) => MList s a -> a -> IO (Compact s (List a))
+findMList l a = readCNFRef l >>= go
+  where
+    go c =
+      case getCompact c of
+        Nil -> return c
+        Cons vec ref -> do
+          v <- readVec vec
+          if v == a
+            then return c
+            else do
+              p <- readIORef ref
+              c' <- appendCompact c p
+              go c'
+
+writeMList :: DeepStrict a => MList s a -> Compact s (List a) -> IO ()
+writeMList m l = do
+  c <- readCNFRef m
   case getCompact c of
-    Nil -> return ()
+    Nil        -> writeCNFRef m l
+    Cons _ ref -> go ref
+
+  where
+    go prev = do
+      cur <- readIORef prev
+      case cur of
+        Nil         -> writeIORef prev $ getCompact l
+        Cons _ next -> go next
+
+newCList :: DeepStrict a => IO (CList a)
+newCList = do
+  root <- newCNFRef Nil
+  free <- newCNFRef Nil
+  -- FIXME:
+  -- free <- appendCNFRef root Nil
+  return $ CList root free
+
+readCList :: (DeepStrict a, Unbox a) => CList a -> IO [a]
+readCList CList { .. } = readMList rootList
+
+writeCList :: (DeepStrict a, Unbox a, Eq a) => CList a -> a -> IO ()
+writeCList CList { .. } a = do
+  c <- dropMList freeList a
+  case getCompact c of
+    Nil -> do
+      vec <- newVec a
+      ref <- newIORef Nil
+      c' <- copyToCompact rootList $ Cons vec ref
+      writeMList rootList c'
+    Cons _ _ ->
+      writeMList rootList c
+
+dropMList :: (DeepStrict a, Unbox a, Eq a) => MList s a -> a -> IO (Compact s (List a))
+dropMList m a = do
+  c <- readCNFRef m
+  case getCompact c of
+    Nil -> return c
+    Cons vec ref -> do
+      v <- readVec vec
+      p <- readIORef ref
+      case p of
+        Nil -> do
+          c' <- copyToCompact m Nil
+          if v == a
+            then do
+              writeCNFRef m c'
+              return c
+            else return c'
+        Cons _ ref' -> do
+          if v == a
+            then do
+              p' <- readIORef ref'
+              c' <- copyToCompact m p'
+              writeCNFRef m c'
+              return c
+            else do
+              ref'' <- go ref ref'
+              p' <- readIORef ref''
+              copyToCompact m p'
+
+  where
+    go pprev prev = do
+      cur <- readIORef prev
+      case cur of
+        Nil -> do
+          Cons vec _ <- readIORef pprev
+          v <- readVec vec
+          if v == a
+            then do
+              writeIORef pprev cur
+              return prev
+            else do
+              p <- newIORef Nil
+              return p
+        Cons _ ref -> do
+          Cons vec _ <- readIORef pprev
+          v <- readVec vec
+          if v == a
+            then do
+              writeIORef pprev cur
+              return prev
+            else go prev ref
+
+popMList :: (DeepStrict a, Unbox a) => MList s a -> IO (Maybe a)
+popMList m = do
+  c <- readCNFRef m
+  case getCompact c of
+    Nil -> return Nothing
     Cons vec ref -> do
       p <- readIORef ref
       case p of
         Nil -> do
-          c' <- copyToCompact rootList Nil
-          writeCNFRef rootList c'
-        Cons vec' ref' -> do
-          p' <- readIORef ref'
-          go ref ref' p'
+          c' <- copyToCompact m Nil
+          writeCNFRef m c'
+          a <- readVec vec
+          return $ Just a
+        Cons _ ref' -> go ref ref'
 
   where
-    go pprev prev Nil = writeIORef pprev Nil
-    go pprev prev (Cons vec ref) = do
-      p <- readIORef ref
-      go prev ref p
+    go pprev prev = do
+      cur <- readIORef prev
+      case cur of
+        Nil -> do
+          Cons vec _ <- readIORef pprev
+          a <- readVec vec
+          writeIORef pprev Nil
+          return $ Just a
+        Cons _ ref -> go prev ref
+
+popCList :: (DeepStrict a, Unbox a, Eq a) => CList a -> IO (Maybe a)
+popCList CList { .. } = do
+  v <- popMList rootList
+  case v of
+    Just a  -> updateMList freeList a
+    Nothing -> return ()
+  return v
+
+lengthCList :: (DeepStrict a, Unbox a) => CList a -> IO Int
+lengthCList CList { .. } =
+  liftM2 (+) (lengthMList rootList) (lengthMList freeList)
