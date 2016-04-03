@@ -13,6 +13,7 @@ import Test.Tasty
 import Test.Tasty.HUnit
 
 import           Data.CList                  as CL
+import           Data.CNFRef
 import           Data.Compact
 import           Data.IntBox                 as IB
 import           Data.IORef
@@ -53,6 +54,7 @@ tests =
         , mutvarTests
         , uiovectorTests
         , intboxTests
+        , mlistTests
         , clistTests
         -- crashes
         -- , iovectorTests
@@ -125,6 +127,50 @@ intboxTests =
              n <- readIntBox ib
              n @?= vs]
 
+mlistTests =
+    testGroup
+        "MList"
+        [ testCase "newMList" $
+          do m <- newCNFRef (Nil :: List Int)
+             n <- readMList m
+             n @?= []
+        , testCase "updateMList" $
+          do m <- newCNFRef (Nil :: List Int)
+             forM_ vs $ updateMList m
+             n <- readMList m
+             n @?= ws
+        , testCase "writeMList" $
+          do m <- newCNFRef (Nil :: List Int)
+             forM_ vs $
+                 \a ->
+                      do vec <- newVec a
+                         ref <- newIORef Nil
+                         c <- copyToCompact m $ Cons vec ref
+                         writeMList m c
+             n <- readMList m
+             n @?= vs
+        , testCase "dropMList" $
+          do m <- newCNFRef (Nil :: List Int)
+             forM_ vs $ updateMList m
+             forM_ ws $ dropMList m
+             n <- readMList m
+             n @?= []
+        , testCase "popMList" $
+          do m <- newCNFRef (Nil :: List Int)
+             forM_ vs $ updateMList m
+             forM_ ws . const $ popMList m
+             n <- readMList m
+             n @?= []
+        , testCase "lengthMList" $
+          do m <- newCNFRef (Nil :: List Int)
+             forM_ vs $ updateMList m
+             n <- lengthMList m
+             n @?= length ws]
+  where
+    vs :: [Int]
+    vs = ws ++ ws
+    ws = [1 .. 10]
+
 clistTests =
     testGroup
         "CList"
@@ -138,10 +184,18 @@ clistTests =
              forM_ vs $ writeCList cl
              forM_ vs . const $ popCList cl
              n <- readCList cl
-             n @?= []]
+             n @?= []
+        , testCase "lengthCList" $
+          do cl <- newCList
+             forM_ vs $ writeCList cl
+             forM_ vs . const $ popCList cl
+             n <- lengthCList cl
+             n @?= length ws]
+
   where
     vs :: [Int]
-    vs = [1 .. 10]
+    vs = ws ++ ws
+    ws = [1 .. 10]
 
 main :: IO ()
 main = defaultMain tests
