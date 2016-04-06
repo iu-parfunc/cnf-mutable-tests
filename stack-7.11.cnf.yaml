@@ -1,3 +1,5 @@
+# This is used to run on IU computers that already have our GHC+CNF fork built.
+
 flags: {}
 extra-package-dbs: []
 local-bin-path: ./bin
