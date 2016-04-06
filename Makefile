@@ -18,7 +18,7 @@ STACK ?= stack
 JOBS ?=
 SRC = $(wildcard *.hs)
 
-.PHONY: all docker clean pull exe ghc test
+.PHONY: all docker clean pull exe ghc test bench
 
 all: exe
 
@@ -54,6 +54,9 @@ exe: $(GHC) $(SRC)
 
 test:
 	$(STACK) test
+
+bench:
+	$(STACK) bench
 
 clean:
 	$(CABAL) clean
