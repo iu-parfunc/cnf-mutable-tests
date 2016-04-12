@@ -138,14 +138,14 @@ mlistTests =
              forM_ vs $ updateMList m
              n <- readMList m
              n @?= ws
-        , testCase "writeMList" $
+        , testCase "appendMList" $
           do m <- newCNFRef (Nil :: List Int)
              forM_ vs $
                  \a ->
                       do vec <- newVec a
                          ref <- newIORef Nil
                          c <- copyToCompact m $ Cons vec ref
-                         writeMList m c
+                         appendMList m c
              n <- readMList m
              n @?= vs
         , testCase "dropMList" $
@@ -177,20 +177,20 @@ clistTests =
           do cl :: CList Int <- newCList
              n <- readCList cl
              n @?= []
-        , testCase "writeCList" $
+        , testCase "pushCList" $
           do cl <- newCList
-             forM_ vs $ writeCList cl
+             forM_ vs $ pushCList cl
              n <- readCList cl
              n @?= vs
         , testCase "popCList" $
           do cl <- newCList
-             forM_ vs $ writeCList cl
+             forM_ vs $ pushCList cl
              forM_ vs . const $ popCList cl
              n <- readCList cl
              n @?= []
         , testCase "sizeCList" $
           do cl <- newCList
-             forM_ vs $ writeCList cl
+             forM_ vs $ pushCList cl
              forM_ vs . const $ popCList cl
              n <- sizeCList cl
              n @?= length ws]

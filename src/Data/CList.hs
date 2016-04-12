@@ -8,7 +8,7 @@ module Data.CList (
     CList,
     newCList,
     readCList,
-    writeCList,
+    pushCList,
     popCList,
     sizeCList,
     ) where
@@ -38,17 +38,17 @@ readCList :: (DeepStrict a, Unbox a) => CList a -> IO [a]
 readCList CList { .. } = readMList rootList
 
 -- | Write a new value at the end of the CList
-writeCList :: (DeepStrict a, Unbox a, Eq a) => CList a -> a -> IO ()
-writeCList CList { .. } a = do
+pushCList :: (DeepStrict a, Unbox a, Eq a) => CList a -> a -> IO ()
+pushCList CList { .. } a = do
   c <- dropMList freeList a
   case getCompact c of
     Nil -> do
       vec <- newVec a
       ref <- newIORef Nil
       c' <- copyToCompact rootList $ Cons vec ref
-      writeMList rootList c'
+      appendMList rootList c'
     Cons _ _ ->
-      writeMList rootList c
+      appendMList rootList c
 
 -- | Drop the value at the end of the CList
 popCList :: (DeepStrict a, Unbox a, Eq a) => CList a -> IO (Maybe a)

@@ -121,8 +121,8 @@ findMList l a = readCNFRef l >>= go
               go c'
 
 -- | Append a List at the end of an MList
-writeMList :: DeepStrict a => MList s a -> Compact s (List a) -> IO ()
-writeMList m l = do
+appendMList :: DeepStrict a => MList s a -> Compact s (List a) -> IO ()
+appendMList m l = do
   c <- readCNFRef m
   case getCompact c of
     Nil        -> writeCNFRef m l
