@@ -2,10 +2,12 @@
 # This should track the cnf/mutable branch.
 # It is hardcoded for reproducibility.
 # We could use a script to update it in lieu of "git submodule" commands.
-MUTABLECNF_VER = 0.2
+MUTABLECNF_VER = 0.3
 # SUBMOD_SHA = 61a27d33d48d566e20b026357ffbfe04edeca30b
 # RRN: This appears to be the 0.2 release, 2/26/2016:
-SUBMOD_SHA = 14302c4be0f6a2fc1e66a8db59a224dfef1bb723
+# SUBMOD_SHA = 14302c4be0f6a2fc1e66a8db59a224dfef1bb723
+# 0.3 release, 4/11/2016:
+SUBMOD_SHA = 8c17982648434fae28dedb102ab4624a7323476b
 
 # Alternatively, there may be some way that we can go back to using
 # a real submodule, but still add an extra remote and use it for recursive
