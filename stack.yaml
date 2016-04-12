@@ -7,7 +7,7 @@ packages:
 system-ghc: true
 docker:
   auto-pull: true
-  repo: vikraman/ghc-mutable-cnf:0.2
+  repo: vikraman/ghc-mutable-cnf:0.3
 extra-deps:
 - ansi-terminal-0.6.2.3
 - ansi-wl-pprint-0.6.7.3
