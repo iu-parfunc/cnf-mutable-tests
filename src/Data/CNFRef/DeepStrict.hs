@@ -31,8 +31,13 @@ instance DeepStrict a => DeepStrict (V.IOVector a)
 instance DeepStrict a => DeepStrict (U.IOVector a)
 
 -- NFData instances for using compact (debatable)
-instance NFData a => NFData (IORef a) where
-  rnf a = unsafePerformIO $ modifyIORef' a force
+
+-- Control.DeepSeq now exports a safe NFData instance for IORef which
+-- only evaluates the reference. This seems to work just fine with
+-- ghc-8.1, although it used to crash in the CNF implementation
+-- earlier.
+-- instance NFData a => NFData (IORef a) where
+--   rnf a = unsafePerformIO $ modifyIORef' a force
 
 instance NFData a => NFData (MutVar RealWorld a) where
   rnf a = unsafePerformIO $ modifyMutVar' a force
