@@ -1,0 +1,4 @@
+[submodule "deps/haskell-lockfree"]
+	path = deps/haskell-lockfree
+	url = https://github.com/rrnewton/haskell-lockfree.git
+	branch = ghc-8.0
