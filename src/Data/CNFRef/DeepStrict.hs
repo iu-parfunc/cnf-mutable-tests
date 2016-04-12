@@ -9,6 +9,7 @@ module Data.CNFRef.DeepStrict where
 
 import Control.DeepSeq
 import Control.Monad
+import GHC.Int
 import GHC.Prim
 import System.IO.Unsafe
 
@@ -27,6 +28,7 @@ class NFData a => DeepStrict a where
 
 -- DeepStrict instances
 instance DeepStrict Int
+instance DeepStrict Int64
 instance DeepStrict a => DeepStrict (V.IOVector a)
 instance DeepStrict a => DeepStrict (U.IOVector a)
 

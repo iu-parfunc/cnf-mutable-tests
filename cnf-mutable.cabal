@@ -27,7 +27,7 @@ library
                      , atomic-primops >=0.8.0.2
                      , primitive >=0.6.1
                      , ghc-prim >=0.4.0.0
-                     , vector >= 0.11
+                     , vector >=0.11
   hs-source-dirs:      src
   ghc-options:         -O2 -Wall -fobject-code
   default-language:    Haskell2010
@@ -38,9 +38,9 @@ test-suite tests
   -- other-modules:
   build-depends:       base >=4.8
                      , deepseq >=1.4
-                     , compact >= 1.0
+                     , compact >=1.0
                      , compact-indexed
-                     , vector >= 0.11
+                     , vector >=0.11
                      , primitive >=0.6.1
                      , ghc-prim >=0.4.0.0
                      , cnf-mutable
@@ -53,11 +53,13 @@ test-suite tests
 benchmark bench
   type:                exitcode-stdio-1.0
   main-is:             Bench.hs
-  -- other-modules:
+  other-modules:       Utils
   build-depends:       base >=4.8
                      , deepseq >=1.4
                      , criterion >=1.1.1.0
                      , cnf-mutable
+                     , pcg-random >=0.1.3.2
+                     , vector >=0.11
   hs-source-dirs:      bench
   ghc-options:         -O2 -Wall
   default-language:    Haskell2010
