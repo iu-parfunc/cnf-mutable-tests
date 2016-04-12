@@ -3,7 +3,7 @@
 
 # Bring the GHC with Data.Compact into path:
 
-DIR=opt/ghc-mutable-cnf-0.2/bin/
+DIR=opt/ghc-mutable-cnf-0.3/bin/
 
 if [ -d ~parfunc/$DIR ]; then
     NEWGHC=~parfunc/$DIR
