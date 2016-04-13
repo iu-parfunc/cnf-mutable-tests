@@ -13,4 +13,4 @@ before_install:
   - stack --version
 
 script:
-  - make test
+  - travis_wait make test
