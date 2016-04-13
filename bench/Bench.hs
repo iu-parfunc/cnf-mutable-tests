@@ -10,7 +10,6 @@ import Control.DeepSeq
 import Control.Monad
 import Criterion.Main
 import Criterion.Types
-import Data.CList
 import Data.Vector.Unboxed         as VU
 import GHC.Generics
 import GHC.Int
@@ -18,6 +17,9 @@ import System.Console.CmdArgs      as CA
 import System.Environment
 import System.Random.PCG.Fast.Pure as PCG
 import Utils
+
+import qualified Data.CList        as CL
+import qualified Data.CList.NoFree as CLNF
 
 data Env = Env { n          :: Int
                , k          :: Int
@@ -46,13 +48,23 @@ setupEnv env@Env { .. } = do
 
 clistBench :: Env -> IO ()
 clistBench Env { .. } = do
-  cl :: CList Int64 <- newCList
+  cl :: CL.CList Int64 <- CL.newCList
   for_ 1 n $ \i -> do
-    pushCList cl $ randomInts ! (i `mod` size)
+    CL.pushCList cl $ randomInts ! (i `mod` size)
   for_ 1 k $ \i -> do
-    popCList cl
-    pushCList cl $ randomInts ! (i `mod` size)
-  void $ readCList cl
+    CL.popCList cl
+    CL.pushCList cl $ randomInts ! (i `mod` size)
+  void $ CL.readCList cl
+
+clistnfBench :: Env -> IO ()
+clistnfBench Env { .. } = do
+  cl :: CLNF.CList Int64 <- CLNF.newCList
+  for_ 1 n $ \i -> do
+    CLNF.pushCList cl $ randomInts ! (i `mod` size)
+  for_ 1 k $ \i -> do
+    CLNF.popCList cl
+    CLNF.pushCList cl $ randomInts ! (i `mod` size)
+  void $ CLNF.readCList cl
 
 config :: Config
 config = defaultConfig { reportFile = Just "report.html"
@@ -65,5 +77,7 @@ main = do
   withArgs criterion $ defaultMainWith config
     [ env (setupEnv args) $
       \env -> bgroup "CList"
-              [ bench "2-phase" $ nfIO (clistBench env) ]
+              [ bgroup "Data.CList" [ bench "2-phase" $ nfIO (clistBench env) ]
+              , bgroup "Data.CList.NoFree" [ bench "2-phase" $ nfIO (clistnfBench env) ]
+              ]
     ]

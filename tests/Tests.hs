@@ -7,8 +7,9 @@ import Data.Foldable
 import Test.Tasty
 import Test.Tasty.HUnit
 
-import           Data.CList                  as CL
+import qualified Data.CList                  as CL
 import           Data.CList.MList            as ML
+import qualified Data.CList.NoFree           as CLNF
 import           Data.CNFRef
 import           Data.Compact
 import           Data.IntBox                 as IB
@@ -55,6 +56,7 @@ tests =
         , intboxTests
         , mlistTests
         , clistTests
+        , clistnfTests
         -- crashes
         -- , iovectorTests
         ]
@@ -174,26 +176,56 @@ clistTests =
     testGroup
         "CList"
         [ testCase "newCList" $
-          do cl :: CList Int <- newCList
-             n <- readCList cl
+          do cl :: CL.CList Int <- CL.newCList
+             n <- CL.readCList cl
              n @?= []
         , testCase "pushCList" $
-          do cl <- newCList
-             forM_ vs $ pushCList cl
-             n <- readCList cl
+          do cl <- CL.newCList
+             forM_ vs $ CL.pushCList cl
+             n <- CL.readCList cl
              n @?= vs
         , testCase "popCList" $
-          do cl <- newCList
-             forM_ vs $ pushCList cl
-             forM_ vs . const $ popCList cl
-             n <- readCList cl
+          do cl <- CL.newCList
+             forM_ vs $ CL.pushCList cl
+             forM_ vs . const $ CL.popCList cl
+             n <- CL.readCList cl
              n @?= []
         , testCase "sizeCList" $
-          do cl <- newCList
-             forM_ vs $ pushCList cl
-             forM_ vs . const $ popCList cl
-             n <- sizeCList cl
+          do cl <- CL.newCList
+             forM_ vs $ CL.pushCList cl
+             forM_ vs . const $ CL.popCList cl
+             n <- CL.sizeCList cl
              n @?= length ws]
+
+  where
+    vs :: [Int]
+    vs = ws ++ ws
+    ws = [1 .. 10]
+
+clistnfTests =
+    testGroup
+        "CList.NoFree"
+        [ testCase "newCList" $
+          do cl :: CLNF.CList Int <- CLNF.newCList
+             n <- CLNF.readCList cl
+             n @?= []
+        , testCase "pushCList" $
+          do cl <- CLNF.newCList
+             forM_ vs $ CLNF.pushCList cl
+             n <- CLNF.readCList cl
+             n @?= vs
+        , testCase "popCList" $
+          do cl <- CLNF.newCList
+             forM_ vs $ CLNF.pushCList cl
+             forM_ vs . const $ CLNF.popCList cl
+             n <- CLNF.readCList cl
+             n @?= []
+        , testCase "sizeCList" $
+          do cl <- CLNF.newCList
+             forM_ vs $ CLNF.pushCList cl
+             forM_ vs . const $ CLNF.popCList cl
+             n <- CLNF.sizeCList cl
+             n @?= 0]
 
   where
     vs :: [Int]

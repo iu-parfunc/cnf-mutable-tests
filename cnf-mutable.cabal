@@ -16,10 +16,11 @@ library
   exposed-modules:     Data.CNFRef
                      , Data.CNFRef.Simple
                      , Data.CNFRef.DeepStrict
-                     , Data.CNFRef.Internal
                      , Data.IntBox
                      , Data.CList
                      , Data.CList.MList
+                     , Data.CList.NoFree
+  other-modules:       Data.CNFRef.Internal
   build-depends:       base >=4.8
                      , deepseq >=1.4
                      , compact >=1.0
