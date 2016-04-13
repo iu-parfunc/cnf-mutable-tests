@@ -23,6 +23,7 @@ extra-deps:
 - cassava-0.4.5.0
 - cereal-0.5.1.0
 - clock-0.7.1.1
+- cmdargs-0.10.14
 - criterion-1.1.1.0
 - dlist-0.7.1.2
 - entropy-0.3.7

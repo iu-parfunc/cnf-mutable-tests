@@ -1,9 +1,8 @@
 {-# LANGUAGE DeriveAnyClass      #-}
+{-# LANGUAGE DeriveDataTypeable  #-}
 {-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE Strict              #-}
-{-# LANGUAGE StrictData          #-}
 
 module Main where
 
@@ -15,6 +14,8 @@ import Data.CList
 import Data.Vector.Unboxed         as VU
 import GHC.Generics
 import GHC.Int
+import System.Console.CmdArgs      as CA
+import System.Environment
 import System.Random.PCG.Fast.Pure as PCG
 import Utils
 
@@ -22,19 +23,26 @@ data Env = Env { n          :: Int
                , k          :: Int
                , size       :: Int
                , range      :: Int64
+               , criterion  :: [String]
                , randomInts :: Vector Int64
-               } deriving (Generic, NFData)
+               }
+  deriving (Eq, Show, Data, Typeable, Generic, NFData)
 
-setupEnv :: IO Env
-setupEnv = do
-  -- Get from args
-  let n = 10 ^ 3
-      k = 10 ^ 3
-      size = 10 ^ 7
-      range = 2 ^ 64
+defaultEnv :: Env
+defaultEnv = Env
+  { n = (10 ^ 3) &= name "N" &= help "Number of phase 1 operations"
+  , k = (10 ^ 3) &= name "K" &= help "Number of phase 2 operations"
+  , size = (10 ^ 7) &= help "Size of precomputed random vector"
+  , range = (2 ^ 64) &= help "Range for random values"
+  , criterion = [] &= help "Arguments to criterion"
+  , randomInts = empty &= ignore
+  } &= CA.verbosity &= program "bench"
+
+setupEnv :: Env -> IO Env
+setupEnv env@Env { .. } = do
   gen <- PCG.createSystemRandom
   randomInts <- VU.replicateM size (uniformR (0, range) gen :: IO Int64)
-  return $ Env n k size range randomInts
+  return $ env { randomInts = randomInts }
 
 clistBench :: Env -> IO ()
 clistBench Env { .. } = do
@@ -52,9 +60,10 @@ config = defaultConfig { reportFile = Just "report.html"
                        }
 
 main :: IO ()
-main =
-  defaultMainWith config
-    [ env setupEnv $
-      \ ~env -> bgroup "CList"
-                [ bench "2-phase" $ nfIO (clistBench env) ]
+main = do
+  args@Env{ .. } <- cmdArgs defaultEnv
+  withArgs criterion $ defaultMainWith config
+    [ env (setupEnv args) $
+      \env -> bgroup "CList"
+              [ bench "2-phase" $ nfIO (clistBench env) ]
     ]
