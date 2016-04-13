@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE Strict              #-}
 {-# LANGUAGE TypeFamilies        #-}
 
 module Main where

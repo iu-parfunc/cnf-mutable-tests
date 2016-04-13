@@ -2,6 +2,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE ScopedTypeVariables       #-}
+{-# LANGUAGE Strict                    #-}
 {-# LANGUAGE StrictData                #-}
 
 -- | An example data structure using CNFRef
