@@ -52,8 +52,10 @@ clistBench Env { .. } = do
   for_ 1 n $ \i -> do
     CL.pushCList cl $ randomInts ! (i `mod` size)
   for_ 1 k $ \i -> do
-    CL.popCList cl
-    CL.pushCList cl $ randomInts ! (i `mod` size)
+    m <- CL.popCList cl
+    case m of
+      Just x -> CL.pushCList cl x
+      Nothing -> CL.pushCList cl $ randomInts ! (i `mod` size)
   void $ CL.readCList cl
 
 clistnfBench :: Env -> IO ()
@@ -62,8 +64,10 @@ clistnfBench Env { .. } = do
   for_ 1 n $ \i -> do
     CLNF.pushCList cl $ randomInts ! (i `mod` size)
   for_ 1 k $ \i -> do
-    CLNF.popCList cl
-    CLNF.pushCList cl $ randomInts ! (i `mod` size)
+    m <- CLNF.popCList cl
+    case m of
+      Just x -> CLNF.pushCList cl x
+      Nothing -> CLNF.pushCList cl $ randomInts ! (i `mod` size)
   void $ CLNF.readCList cl
 
 config :: Config
