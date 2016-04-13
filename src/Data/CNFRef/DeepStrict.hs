@@ -1,5 +1,5 @@
-{-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE Strict            #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- | A hypothetical typeclass to track transitive strictness.
@@ -47,6 +47,6 @@ instance NFData a => NFData (MutVar RealWorld a) where
 instance NFData a => NFData (V.IOVector a) where
   rnf a = unsafePerformIO $ modifyIOVector' a force
     where
-      modifyIOVector' !a !f = go' a f 0 (V.length a)
-      go' !a !f !i !l = when (i < l) $
+      modifyIOVector' a f = go' a f 0 (V.length a)
+      go' a f i l = when (i < l) $
         V.unsafeModify a f i >> go' a f (i + 1) l

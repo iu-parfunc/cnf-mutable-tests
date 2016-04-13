@@ -1,5 +1,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE RecordWildCards           #-}
+{-# LANGUAGE Strict                    #-}
 {-# LANGUAGE StrictData                #-}
 
 -- | A linked-list like data structure in a compact

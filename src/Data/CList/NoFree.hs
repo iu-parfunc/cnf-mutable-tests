@@ -1,5 +1,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE RecordWildCards           #-}
+{-# LANGUAGE Strict                    #-}
 {-# LANGUAGE StrictData                #-}
 
 -- | CList variant with no freeList
