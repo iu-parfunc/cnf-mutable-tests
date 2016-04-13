@@ -124,7 +124,7 @@ intboxTests =
         "IntBox"
         [ testCase "IntBox" $
           do ib <- newIntBox
-             let vs :: [Int] = [1 .. 10]
+             let vs :: [Int] = [1 .. 100]
              forM_ vs $ writeIntBox ib
              n <- readIntBox ib
              n @?= vs]
@@ -171,7 +171,7 @@ mlistTests =
   where
     vs :: [Int]
     vs = ws ++ ws
-    ws = [1 .. 10]
+    ws = [1 .. 1000]
 
 clistTests =
     testGroup
@@ -201,7 +201,7 @@ clistTests =
   where
     vs :: [Int]
     vs = ws ++ ws
-    ws = [1 .. 10]
+    ws = [1 .. 1000]
 
 clistnfTests =
     testGroup
@@ -231,7 +231,7 @@ clistnfTests =
   where
     vs :: [Int]
     vs = ws ++ ws
-    ws = [1 .. 10]
+    ws = [1 .. 1000]
 
 main :: IO ()
 main = defaultMain tests
