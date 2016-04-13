@@ -75,8 +75,9 @@ readMList l = do
       return $ a : as
 
 -- | Insert a value into a MList if it doesn't already exist
-updateMList :: (DeepStrict a, Unbox a, Eq a) => MList s a -> a -> IO ()
-updateMList m a = do
+updateMList :: (DeepStrict a, Unbox a, Eq a) => MList s a -> Compact s a -> IO ()
+updateMList m ca = do
+  let a = getCompact ca
   c <- readCNFRef m
   case getCompact c of
     Nil -> do
@@ -90,12 +91,14 @@ updateMList m a = do
 
   where
     go prev = do
+      let a = getCompact ca
       cur <- readIORef prev
       case cur of
         Nil -> do
           vec <- newVec a
           ref <- newIORef Nil
-          writeIORef prev $ Cons vec ref
+          c <- copyToCompact m $ Cons vec ref
+          writeIORef prev $ getCompact c
         Cons vec next -> do
           v <- readVec vec
           unless (v == a) $ go next
@@ -182,11 +185,11 @@ dropMList m a = do
             else go prev ref
 
 -- | Drop the last value in the MList
-popMList :: (DeepStrict a, Unbox a) => MList s a -> IO (Maybe a)
+popMList :: (DeepStrict a, Unbox a) => MList s a -> IO (Compact s (Maybe a))
 popMList m = do
   c <- readCNFRef m
   case getCompact c of
-    Nil -> return Nothing
+    Nil -> copyToCompact m Nothing
     Cons vec ref -> do
       p <- readIORef ref
       case p of
@@ -194,7 +197,7 @@ popMList m = do
           c' <- copyToCompact m Nil
           writeCNFRef m c'
           a <- readVec vec
-          return $ Just a
+          copyToCompact m $ Just a
         Cons _ ref' -> go ref ref'
 
   where
@@ -204,6 +207,7 @@ popMList m = do
         Nil -> do
           Cons vec _ <- readIORef pprev
           a <- readVec vec
-          writeIORef pprev Nil
-          return $ Just a
+          c <- copyToCompact m Nil
+          writeIORef pprev $ getCompact c
+          copyToCompact m $ Just a
         Cons _ ref -> go prev ref

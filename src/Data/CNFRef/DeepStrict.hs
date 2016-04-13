@@ -29,6 +29,7 @@ class NFData a => DeepStrict a where
 -- DeepStrict instances
 instance DeepStrict Int
 instance DeepStrict Int64
+instance DeepStrict a => DeepStrict (Maybe a)
 instance DeepStrict a => DeepStrict (V.IOVector a)
 instance DeepStrict a => DeepStrict (U.IOVector a)
 

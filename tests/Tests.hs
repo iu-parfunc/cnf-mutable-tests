@@ -137,7 +137,7 @@ mlistTests =
              n @?= []
         , testCase "updateMList" $
           do m <- newCNFRef (Nil :: List Int)
-             forM_ vs $ updateMList m
+             forM_ vs $ (updateMList m =<<) . copyToCompact m
              n <- readMList m
              n @?= ws
         , testCase "appendMList" $
@@ -152,19 +152,19 @@ mlistTests =
              n @?= vs
         , testCase "dropMList" $
           do m <- newCNFRef (Nil :: List Int)
-             forM_ vs $ updateMList m
+             forM_ vs $ (updateMList m =<<) . copyToCompact m
              forM_ ws $ dropMList m
              n <- readMList m
              n @?= []
         , testCase "popMList" $
           do m <- newCNFRef (Nil :: List Int)
-             forM_ vs $ updateMList m
+             forM_ vs $ (updateMList m =<<) . copyToCompact m
              forM_ ws . const $ popMList m
              n <- readMList m
              n @?= []
         , testCase "lengthMList" $
           do m <- newCNFRef (Nil :: List Int)
-             forM_ vs $ updateMList m
+             forM_ vs $ (updateMList m =<<) . copyToCompact m
              n <- lengthMList m
              n @?= length ws]
   where

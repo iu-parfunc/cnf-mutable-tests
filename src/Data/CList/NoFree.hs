@@ -17,6 +17,7 @@ module Data.CList.NoFree (
 import Data.CList.MList
 import Data.CNFRef
 import Data.CNFRef.DeepStrict
+import Data.Compact.Indexed
 import Data.IORef
 import Data.Vector.Unboxed.Mutable
 
@@ -44,7 +45,7 @@ pushCList CList { .. } a = do
 
 -- | Drop the value at the end of the CList
 popCList :: (DeepStrict a, Unbox a, Eq a) => CList a -> IO (Maybe a)
-popCList CList { .. } = popMList rootList
+popCList CList { .. } = getCompact <$> popMList rootList
 
 -- | Return the total size of the CList (including free list)
 sizeCList :: (DeepStrict a, Unbox a) => CList a -> IO Int

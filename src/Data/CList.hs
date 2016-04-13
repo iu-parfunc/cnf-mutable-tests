@@ -54,9 +54,12 @@ pushCList CList { .. } a = do
 -- | Drop the value at the end of the CList
 popCList :: (DeepStrict a, Unbox a, Eq a) => CList a -> IO (Maybe a)
 popCList CList { .. } = do
-  v <- popMList rootList
+  c <- popMList rootList
+  let v = getCompact c
   case v of
-    Just a  -> updateMList freeList a
+    Just a -> do
+      c' <- copyToCompact rootList a
+      updateMList freeList c'
     Nothing -> return ()
   return v
 
