@@ -5,6 +5,10 @@ language: c
 services:
   - docker
 
+cache:
+  directories:
+    - $HOME/.stack
+
 before_install:
   # Download and unpack the stack executable
   - mkdir -p ${HOME}/.local/bin
@@ -13,4 +17,4 @@ before_install:
   - stack --version
 
 script:
-  - travis_wait make test
+  - make test
