@@ -1,5 +1,7 @@
+{-# LANGUAGE DeriveAnyClass            #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE RecordWildCards           #-}
+{-# LANGUAGE StandaloneDeriving        #-}
 {-# LANGUAGE Strict                    #-}
 {-# LANGUAGE StrictData                #-}
 
@@ -14,6 +16,7 @@ module Data.CList (
     sizeCList,
     ) where
 
+import Control.DeepSeq
 import Control.Monad
 import Data.CList.MList
 import Data.CNFRef
@@ -26,6 +29,11 @@ import Data.Vector.Unboxed.Mutable
 data CList a = forall s. CList { rootList :: MList s a -- ^ pointer to root list
                                , freeList :: MList s a -- ^ pointer to free list
                                }
+
+instance NFData a => NFData (CList a) where
+  rnf _ = ()
+
+deriving instance DeepStrict a => DeepStrict (CList a)
 
 -- | Create a new CList
 newCList :: DeepStrict a => IO (CList a)

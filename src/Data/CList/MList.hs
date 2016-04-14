@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass     #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE GADTs              #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -25,9 +26,8 @@ data List a where
        -> List a
 
 deriving instance Generic (List a)
-
-instance NFData a => NFData (List a)
-instance DeepStrict a => DeepStrict (List a)
+deriving instance NFData (List a)
+deriving instance DeepStrict (List a)
 
 -- | A cons-list in a mutable compact region
 type MList s a = CNFRef s (List a)
