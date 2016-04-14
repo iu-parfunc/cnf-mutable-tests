@@ -1,5 +1,9 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE Strict            #-}
+{-# LANGUAGE DeriveAnyClass     #-}
+{-# LANGUAGE FlexibleInstances  #-}
+{-# LANGUAGE KindSignatures     #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE Strict             #-}
+{-# LANGUAGE TypeOperators      #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- | A hypothetical typeclass to track transitive strictness.
@@ -9,7 +13,9 @@ module Data.CNFRef.DeepStrict where
 
 import Control.DeepSeq
 import Control.Monad
-import GHC.Int
+import Data.Int
+import Data.Word
+import GHC.Generics
 import GHC.Prim
 import System.IO.Unsafe
 
@@ -26,11 +32,44 @@ import Data.Vector.Unboxed.Mutable as U
 -- This can be done in a better way using IntrinsicSuperclasses.
 class NFData a => DeepStrict a where
 
+class GDeepStrict (f :: * -> *) where
+
+instance GDeepStrict U1
+instance GDeepStrict V1
+instance GDeepStrict f => GDeepStrict (D1 m f)
+instance GDeepStrict f => GDeepStrict (C1 m f)
+instance (GDeepStrict f, GDeepStrict g) => GDeepStrict (f :+: g)
+instance (GDeepStrict f, GDeepStrict g) => GDeepStrict (f :*: g)
+instance GDeepStrict (Rec0 f)
+
 -- DeepStrict instances
+
 instance DeepStrict Int
+instance DeepStrict Word
+instance DeepStrict Integer
+instance DeepStrict Float
+instance DeepStrict Double
+
+instance DeepStrict Char
+instance DeepStrict Bool
+instance DeepStrict ()
+
+instance DeepStrict Int8
+instance DeepStrict Int16
+instance DeepStrict Int32
 instance DeepStrict Int64
-instance DeepStrict a => DeepStrict (Maybe a)
-instance DeepStrict a => DeepStrict (V.IOVector a)
+
+instance DeepStrict Word8
+instance DeepStrict Word16
+instance DeepStrict Word32
+instance DeepStrict Word64
+
+deriving instance DeepStrict a => DeepStrict (Maybe a)
+deriving instance DeepStrict a => DeepStrict [a]
+deriving instance (DeepStrict a, DeepStrict b) => DeepStrict (Either a b)
+deriving instance (DeepStrict a, DeepStrict b) => DeepStrict (a, b)
+
+deriving instance DeepStrict a => DeepStrict (V.IOVector a)
 instance DeepStrict a => DeepStrict (U.IOVector a)
 
 -- NFData instances for using compact (debatable)
@@ -48,6 +87,6 @@ instance NFData a => NFData (MutVar RealWorld a) where
 instance NFData a => NFData (V.IOVector a) where
   rnf a = unsafePerformIO $ modifyIOVector' a force
     where
-      modifyIOVector' a f = go' a f 0 (V.length a)
-      go' a f i l = when (i < l) $
-        V.unsafeModify a f i >> go' a f (i + 1) l
+      modifyIOVector' v f = go' v f 0 (V.length a)
+      go' v f i l = when (i < l) $
+        V.unsafeModify v f i >> go' v f (i + 1) l
