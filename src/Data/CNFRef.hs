@@ -2,6 +2,9 @@
 {-# LANGUAGE RankNTypes    #-}
 {-# LANGUAGE Strict        #-}
 {-# LANGUAGE StrictData    #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE GADTs #-}
 
 module Data.CNFRef where
        -- ( CNFRef(..) -- Transparent for now...
@@ -21,29 +24,38 @@ import Data.CNFRef.Internal
 import Data.Compact.Indexed
 import Data.IORef
 
+-- It looks like this is GONE in ghc-prim-0.5.0.0
+import GHC.Base (Any)
+
 newtype CNFRef s a = CNFRef (Compact s (IORef a))
 -- RRN: I've had a change of heart, I think this should just be an alias:
 -- type CNFRef s a = Compact s (IORef a)
 
 newtype CIO s a = CIO (IO a) deriving (Functor, Applicative, Monad)
+-- TODO: Switch CIO to use ReaderT to provide ask.
 
--- Dose Any help?  Alternative, actually copy a () into the Block.
-type BlockChain s = Compact s Any
+-- type BlockChain s = Compact s Any
+-- Dose `Any` help?  Alternative, we can actually copy a () into the Block.
+-- Actually, we *must* pass something to newCompact currently.
+-- It doesn't let us allocate a truly EMPTY block chain.
+type BlockChain s = Compact s ()
 
 runCIO :: (forall s . CIO s a) -> IO a
-runCIO (CIO fn) =
-  do c <- newCompact 4096
-     let CIO io = fn c
-     io
+runCIO (CIO io) =
+  do c <- newCompact 4096 ()
+     -- runReaderT c ...
+     io 
 
 ask :: CIO s (BlockChain s)
 ask = undefined
   
-newCNFRef' :: a -> CIO s (CNFRef s a)
-newCNFRef' = undefined
+newCNFRef' :: NFData a => a -> CIO s (CNFRef s a)
+newCNFRef' x =
+  do block <- ask
+     undefined
 
-newCompact' :: NFData a => a -> CIO s (Compact s a)
-newCompact' = undefined
+appendCompact' :: NFData a => a -> CIO s (Compact s a)
+appendCompact' = undefined
 
 -- We expect: (1) DeepStrict a => NFData a
 --            (2) DeepStrict a => rnf == seq
@@ -54,9 +66,54 @@ writeCNFRef' = undefined
 -- Factory methods:
 ----------------------------------------
 
-factory :: CIO (blah -> IO blah)
+readFactory :: CIO s (CNFRef s a -> IO a)
+readFactory = undefined
+
+-- Separate constructor to avoid impredicativity polymporphism problems.
+newtype Appender s = Appender (forall a . NFData a => a -> IO (Compact s a))
+
+-- appendFactory :: forall s . CIO s (forall a . NFData a => a -> IO (Compact s a))
+appendFactory :: forall s . CIO s (Appender s)
+appendFactory = undefined
 
 
+-- Example existential package:
+----------------------------------------
+
+data MyRef a =
+  forall s .
+  MyRef { ref       :: CNFRef s a
+        , readMyRef :: IO a
+        , append :: (forall x . NFData x => x -> IO (Compact s x))
+        }
+
+-- POSSIBLE PERF PROBLEM:
+----------------
+-- Methods like writeMyRef could work well with an inlined MyRef record.
+-- However, the code for newMyRef is not going to get optimized.  The data
+-- constructor application for `MyRef` happens at the end of several actiosn
+-- nested inside the RTS of several binds.  Functions like appendFactory can
+-- inline, but the newCNFRef (and underlying newIORef )will not, and will serve
+-- as a barrier to optimization.
+--
+-- 
+newMyRef :: NFData a => a -> IO (MyRef a)
+newMyRef x = runCIO $ do
+  r  <- newCNFRef' x
+  rd <- readFactory
+  Appender ap <- appendFactory
+  return $ MyRef { ref       = r
+                 , readMyRef = rd r
+                 , append    = ap
+                 }
+
+writeMyRef :: NFData a => MyRef a -> a -> IO ()
+writeMyRef (MyRef {ref,append}) a  =
+  do a' <- append a 
+     writeCNFRef ref a'
+  
+
+-- These look like they ARE safe:
 --------------------------------------------------------------------------------
 
 -- | Point a CNFRef at a new value that already lives in the correct
@@ -77,7 +134,7 @@ readCNFRef (CNFRef c) = do
   appendCompact c a
 
 
--- UNSAFE interface:
+-- These are certainly UNSAFE:
 --------------------------------------------------------------------------------
 
 -- | Copy a new value to the same compact region as the CNFRef.
