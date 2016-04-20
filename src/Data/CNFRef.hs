@@ -1,17 +1,19 @@
-{-# LANGUAGE Strict     #-}
-{-# LANGUAGE StrictData #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE RankNTypes    #-}
+{-# LANGUAGE Strict        #-}
+{-# LANGUAGE StrictData    #-}
 
-module Data.CNFRef
-       ( CNFRef(..) -- Transparent for now...
-       , copyToCompact
-       , newCNFRef
-       , appendCNFRef
-       , readCNFRef
-       , writeCNFRef
-       -- , modifyCNFRef
-       -- , atomicWriteCNFRef
-       -- , atomicModifyCNFRef
-       ) where
+module Data.CNFRef where
+       -- ( CNFRef(..) -- Transparent for now...
+       -- , copyToCompact
+       -- , newCNFRef
+       -- , appendCNFRef
+       -- , readCNFRef
+       -- , writeCNFRef
+       -- -- , modifyCNFRef
+       -- -- , atomicWriteCNFRef
+       -- -- , atomicModifyCNFRef
+       -- ) where
 
 import Control.DeepSeq
 import Data.CNFRef.DeepStrict
@@ -22,6 +24,20 @@ import Data.IORef
 newtype CNFRef s a = CNFRef (Compact s (IORef a))
 -- RRN: I've had a change of heart, I think this should just be an alias:
 -- type CNFRef s a = Compact s (IORef a)
+
+newtype CIO s a = CIO (IO a) deriving (Functor, Applicative, Monad)
+
+runCIO :: (forall s . CIO s a) -> IO a
+runCIO (CIO io) = io
+
+newCNFRef' :: a -> CIO s (CNFRef s a)
+newCNFRef' = undefined
+
+newCompact' :: a -> CIO s (Compact s a)
+newCompact' = undefined
+
+writeCNFRef' :: CNFRef s a -> Compact s a -> CIO s ()
+writeCNFRef' = undefined
 
 -- | Copy a new value to the same compact region as the CNFRef.
 --

@@ -7,14 +7,14 @@
 
 -- | A linked-list like data structure in a compact
 
-module Data.CList (
-    CList,
-    newCList,
-    readCList,
-    pushCList,
-    popCList,
-    sizeCList,
-    ) where
+module Data.CList where -- (
+    -- CList,
+    -- newCList,
+    -- readCList,
+    -- pushCList,
+    -- popCList,
+    -- sizeCList,
+    -- ) where
 
 import Control.DeepSeq
 import Control.Monad
@@ -34,6 +34,22 @@ instance NFData a => NFData (CList a) where
   rnf _ = ()
 
 deriving instance DeepStrict a => DeepStrict (CList a)
+
+data CList' a = forall s. CList' { rootList'    :: CNFRef s a
+                                 , readCNFRef'' :: CNFRef s a -> IO a
+                                 }
+
+factory :: CIO s (CNFRef s a -> IO a)
+factory = undefined
+
+f :: CList' Int -> IO Int
+f CList' { .. } = do -- c <- newCompact' 42
+                     readCNFRef'' rootList'
+
+newCList' :: DeepStrict a => IO (CList' a)
+newCList' = runCIO $ do root <- newCNFRef' undefined
+                        x <- factory
+                        return $ CList' root x
 
 -- | Create a new CList
 newCList :: DeepStrict a => IO (CList a)
