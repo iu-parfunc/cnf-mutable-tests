@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveDataTypeable  #-}
 {-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE RecordWildCards     #-}
+{-# LANGUAGE NamedFieldPuns      #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
@@ -54,7 +55,20 @@ clistBench Env { .. } = do
   for_ 1 k $ \i -> do
     CL.popCList cl
     CL.pushCList cl $ randomInts ! (i `mod` size)
-  void $ CL.readCList cl
+--  void $ CL.readCList cl
+
+phase1Only :: Env -> IO (CL.CList Int64)
+phase1Only Env{n,randomInts,size} = do
+  cl :: CL.CList Int64 <- CL.newCList
+  for_ 1 n $ \i -> do
+    CL.pushCList cl $ randomInts ! (i `mod` size)
+  return cl
+
+clistBenchSteadyStateFine :: (Env,CL.CList Int64) -> Int64 -> IO ()
+clistBenchSteadyStateFine (Env { .. }, cl) iters = do
+  for_ 1 (fromIntegral iters) $ \i -> do
+    CL.popCList cl
+    CL.pushCList cl $ randomInts ! (i `mod` size)
 
 clistnfBench :: Env -> IO ()
 clistnfBench Env { .. } = do
@@ -73,11 +87,19 @@ config = defaultConfig { reportFile = Just "report.html"
 
 main :: IO ()
 main = do
-  args@Env{ .. } <- cmdArgs defaultEnv
+  -- args@Env{ .. } <- cmdArgs defaultEnv
+  criterion <- getArgs
+  let env0 = defaultEnv -- args
   withArgs criterion $ defaultMainWith config
-    [ env (setupEnv args) $
-      \env -> bgroup "CList"
-              [ bgroup "Data.CList" [ bench "2-phase" $ nfIO (clistBench env) ]
-              , bgroup "Data.CList.NoFree" [ bench "2-phase" $ nfIO (clistnfBench env) ]
+    [ env (setupEnv env0) $
+      \ev ->  bgroup "CList"
+              [
+                bgroup "Data.CList" [
+                  -- bench "2-phase" $ nfIO (clistBench env)                  
+                  env (phase1Only ev) $ \cl ->
+                    bench "phase2" $ Benchmarkable (clistBenchSteadyStateFine (ev,cl))
+                  ]
+--              , bgroup "Data.CList.NoFree" [ bench "2-phase" $ nfIO (clistnfBench env) ]
+                
               ]
     ]
