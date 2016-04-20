@@ -27,17 +27,58 @@ newtype CNFRef s a = CNFRef (Compact s (IORef a))
 
 newtype CIO s a = CIO (IO a) deriving (Functor, Applicative, Monad)
 
-runCIO :: (forall s . CIO s a) -> IO a
-runCIO (CIO io) = io
+-- Dose Any help?  Alternative, actually copy a () into the Block.
+type BlockChain s = Compact s Any
 
+runCIO :: (forall s . CIO s a) -> IO a
+runCIO (CIO fn) =
+  do c <- newCompact 4096
+     let CIO io = fn c
+     io
+
+ask :: CIO s (BlockChain s)
+ask = undefined
+  
 newCNFRef' :: a -> CIO s (CNFRef s a)
 newCNFRef' = undefined
 
-newCompact' :: a -> CIO s (Compact s a)
+newCompact' :: NFData a => a -> CIO s (Compact s a)
 newCompact' = undefined
+
+-- We expect: (1) DeepStrict a => NFData a
+--            (2) DeepStrict a => rnf == seq
 
 writeCNFRef' :: CNFRef s a -> Compact s a -> CIO s ()
 writeCNFRef' = undefined
+
+-- Factory methods:
+----------------------------------------
+
+factory :: CIO (blah -> IO blah)
+
+
+--------------------------------------------------------------------------------
+
+-- | Point a CNFRef at a new value that already lives in the correct
+-- region.
+writeCNFRef :: CNFRef s a -> Compact s a -> IO ()
+writeCNFRef (CNFRef c) c' = do
+  let ref = getCompact c
+      a = getCompact c'
+  writeIORef ref a
+
+-- | Read the contents of the CNFRef, but don't lose track of the fact
+--   that the value lives in the same compact region as the reference
+--   that points to it.
+readCNFRef :: DeepStrict a => CNFRef s a -> IO (Compact s a)
+readCNFRef (CNFRef c) = do
+  let ref = getCompact c
+  a <- readIORef ref
+  appendCompact c a
+
+
+-- UNSAFE interface:
+--------------------------------------------------------------------------------
 
 -- | Copy a new value to the same compact region as the CNFRef.
 --
@@ -65,22 +106,6 @@ appendCNFRef (CNFRef c) b = do
   c' <- appendCompact c ref'
   return $ CNFRef c'
 
--- | Read the contents of the CNFRef, but don't lose track of the fact
---   that the value lives in the same compact region as the reference
---   that points to it.
-readCNFRef :: DeepStrict a => CNFRef s a -> IO (Compact s a)
-readCNFRef (CNFRef c) = do
-  let ref = getCompact c
-  a <- readIORef ref
-  appendCompact c a
-
--- | Point a CNFRef at a new value that already lives in the correct
--- region.
-writeCNFRef :: CNFRef s a -> Compact s a -> IO ()
-writeCNFRef (CNFRef c) c' = do
-  let ref = getCompact c
-      a = getCompact c'
-  writeIORef ref a
 
 -- modifyCNFRef :: DeepStrict a => CNFRef s a -> (a -> Compact s a) -> IO ()
 -- modifyCNFRef ref f = undefined
