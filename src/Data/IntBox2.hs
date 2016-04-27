@@ -17,26 +17,23 @@ import Data.Vector.Unboxed.Mutable as V
 
 -- | An IntBox contains an existentially-bound private region:
 data IntBox = forall s. IntBox { _box      :: CNFRef s Int
-                               , _block :: BlockChain s
-                               -- , _readBox  :: CNFRef s (IOVector Int) -> CIO s [Int]
-                               -- , _writeBox :: CNFRef s (IOVector Int) -> Int -> CIO s ()
+                               -- , _block :: BlockChain s
                                }
 
 newIntBox :: IO IntBox
 newIntBox = 
   runCIO $ do
     ref <- newCNFRef 0
-    bl  <- getBlockChain
-    return $ IntBox ref bl
+    return $ IntBox ref 
 
 readIntBox :: IntBox -> IO Int
-readIntBox IntBox { _box, _block } =
+readIntBox IntBox { .. } =
   do c <- readCNFRef _box     
      return (getCompact c)
 
 -- Leaks memory!  Only for demonstration purposes:
 writeIntBox :: IntBox -> Int -> IO ()
-writeIntBox IntBox { _box, _block } n =
-  do c <- appendCompact _block n
+writeIntBox IntBox { .. } n =
+  do c <- appendCompact _box n
      writeCNFRef _box c
 
