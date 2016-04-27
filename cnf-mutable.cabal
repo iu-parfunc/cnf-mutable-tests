@@ -16,17 +16,18 @@ library
   exposed-modules:     Data.CNFRef
                      , Data.CNFRef.DeepStrict
                      , Data.IntBox
-                     , Data.CList
-                     , Data.CList.MList
-                     , Data.CList.NoFree
-  other-modules:       Data.CNFRef.Internal
-  build-depends:       base >=4.8
-                     , deepseq >=1.4
+                     -- , Data.CList
+                     -- , Data.CList.MList
+                     -- , Data.CList.NoFree
+  -- other-modules:     -- Data.CNFRef.Internal
+  build-depends:       atomic-primops >=0.8.0.2
+                     , base >=4.8
                      , compact >=1.0
                      , compact-indexed
-                     , atomic-primops >=0.8.0.2
-                     , primitive >=0.6.1
+                     , deepseq >=1.4
                      , ghc-prim >=0.4.0.0
+                     , mtl >= 2.2.1
+                     , primitive >=0.6.1
                      , vector >=0.11
   hs-source-dirs:      src
   ghc-options:         -O2 -Wall -fobject-code -threaded -rtsopts -with-rtsopts=-N
