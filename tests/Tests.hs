@@ -12,7 +12,6 @@ import Test.Tasty.HUnit
 -- import qualified Data.CList                  as CL
 -- import           Data.CList.MList            as ML
 -- import qualified Data.CList.NoFree           as CLNF
-import           Data.CNFRef
 import           Data.Compact
 import           Data.IntBox                 as IB
 import           Data.IORef
@@ -124,10 +123,10 @@ intboxTests =
     testGroup
         "IntBox"
         [ testCase "IntBox" $
-          do IntBox {..} <- newIntBox
+          do ib <- newIntBox
              let vs :: [Int] = [1 .. 100]
-             forM_ vs $ \v -> runCIO $ writeIntBox box v
-             n <- runCIO $ readIntBox box
+             forM_ vs $ \v -> writeIntBox ib v
+             n <- readIntBox ib
              n @?= vs]
 
 -- mlistTests =
