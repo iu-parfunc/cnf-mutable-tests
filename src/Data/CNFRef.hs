@@ -56,10 +56,8 @@ newCNFRefIn blk b = do
 
 -- | Copy a boxed value into an existing compact region and return a
 -- new Compact that points to it.
-newCompactIn :: DeepStrict a => a -> CIO s (Compact s a)
-newCompactIn a = do
-  block <- ask
-  liftIO $ appendCompact block a
+newCompactIn :: DeepStrict b => CNFRef s a -> b -> IO (Compact s b)
+newCompactIn (CNFRef c) a = appendCompact c a
 
 -- | Return the blockchain for a region.
 getBlockChain :: CIO s (BlockChain s)
