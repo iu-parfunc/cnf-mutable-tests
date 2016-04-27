@@ -2,22 +2,24 @@
 {-# LANGUAGE Strict     #-}
 {-# LANGUAGE StrictData #-}
 
-module Data.CNFRef where
-       -- ( CNFRef(..) -- Transparent for now...
-       -- , copyToCompact
-       -- , newCNFRef
-       -- , appendCNFRef
-       -- , readCNFRef
-       -- , writeCNFRef
-       -- -- , modifyCNFRef
-       -- -- , atomicWriteCNFRef
-       -- -- , atomicModifyCNFRef
-       -- ) where
+module Data.CNFRef 
+       ( CNFRef     -- Transparent for now...
+       , BlockChain -- TODO: Should be defined elsewhere.
+       , CIO, runCIO, getBlockChain
+       , copyToCompact
+       , newCNFRef
+       , newCNFRefIn
+       , readCNFRef
+       , writeCNFRef
+       -- , modifyCNFRef
+       -- , atomicWriteCNFRef
+       -- , atomicModifyCNFRef
+       ) where
 
 import Control.DeepSeq
 import Control.Monad.Reader
 import Data.CNFRef.DeepStrict
-import Data.CNFRef.Internal
+-- import Data.CNFRef.Internal
 import Data.Compact.Indexed
 import Data.IORef
 
@@ -57,6 +59,16 @@ newCNFRef a = do
     ref <- newIORef a
     appendCompact block ref
 
+-- | Append a boxed value into an existing CNFRef and return a new
+-- CNFRef that points to it.
+newCNFRefIn :: NFData b => BlockChain s -> b -> IO (CNFRef s b)
+newCNFRefIn blk b = do
+  ref' <- newIORef b
+  c'   <- appendCompact blk ref' -- This had better copy thru the ref...
+  return c'
+
+
+
 getBlockChain :: CIO s (BlockChain s)
 getBlockChain = ask
 
@@ -65,21 +77,25 @@ copyToCompact a = do
   block <- ask
   liftIO $ appendCompact block a
 
-readCNFRef :: DeepStrict a => CNFRef s a -> CIO s (Compact s a)
+-- TODO: switch to IO
+readCNFRef :: DeepStrict a => CNFRef s a -> IO (Compact s a)
 readCNFRef c = do
   let ref = getCompact c
-  liftIO $ do
-    a <- readIORef ref
-    appendCompact c a
+  a <- readIORef ref
+  appendCompact c a
 
-writeCNFRef :: CNFRef s a -> Compact s a -> CIO s ()
+-- TODO: switch to IO
+writeCNFRef :: CNFRef s a -> Compact s a -> IO ()
 writeCNFRef c c' = do
   let ref = getCompact c
       a' = getCompact c'
-  liftIO $ writeIORef ref a'
+  writeIORef ref a'
 
 -- -- Factory methods:
 -- ----------------------------------------
+
+mkReadCNFRef :: DeepStrict a => CNFRef s a -> CIO s (IO a)
+mkReadCNFRef = error "mkReadCNFRef Implement me, I'm part of the trusted abstraction."
 
 -- readFactory :: CIO s (CNFRef s a -> IO a)
 -- readFactory = undefined
@@ -161,14 +177,6 @@ writeCNFRef c c' = do
 -- -- copyToCompact :: NFData b => CNFRef s a -> b -> IO (Compact s b)
 -- -- copyToCompact (CNFRef c) b = appendCompact c b  -- This will leak if b
 -- --                                                 -- is not unboxed.
-
--- -- -- | Append a boxed value into an existing CNFRef and return a new
--- -- -- CNFRef that points to it.
--- -- appendCNFRef :: NFData b => CNFRef s a -> b -> IO (CNFRef s b)
--- -- appendCNFRef (CNFRef c) b = do
--- --   ref' <- newIORef b
--- --   c' <- appendCompact c ref' -- This had better copy thru the ref...
--- --   return $ CNFRef c'
 
 
 -- -- These are certainly UNSAFE:

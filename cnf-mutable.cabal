@@ -16,6 +16,7 @@ library
   exposed-modules:     Data.CNFRef
                      , Data.CNFRef.DeepStrict
                      , Data.IntBox
+                     , Data.IntBox2
                      -- , Data.CList
                      -- , Data.CList.MList
                      -- , Data.CList.NoFree
