@@ -1,13 +1,11 @@
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE RecordWildCards, NamedFieldPuns #-}
+{-# LANGUAGE RecordWildCards           #-}
 {-# LANGUAGE Strict                    #-}
 {-# LANGUAGE StrictData                #-}
 
 -- | An example data structure using CNFRef
 
-module Data.IntBox
-       -- (IntBox, newIntBox, readIntBox, writeIntBox)
-where
+module Data.IntBox (IntBox, newIntBox, readIntBox, writeIntBox) where
 
 import Control.Monad.Trans
 import Data.CNFRef
@@ -16,66 +14,31 @@ import Data.Traversable
 import Data.Vector.Unboxed.Mutable as V
 
 -- | An IntBox contains an existentially-bound private region:
-data IntBox = forall s. IntBox { _box      :: CNFRef s (IOVector Int)
-                               , _block :: BlockChain s
-                               -- , _readBox  :: CNFRef s (IOVector Int) -> CIO s [Int]
-                               -- , _writeBox :: CNFRef s (IOVector Int) -> Int -> CIO s ()
-                               }
+data IntBox = forall s. IntBox { ref :: CNFRef s (IOVector Int) }
 
+-- | Create an empty IntBox.
 newIntBox :: IO IntBox
 newIntBox = do
-  vec <- unsafeNew 1
+  vec <- unsafeNew 0
   runCIO $ do
     ref <- newCNFRef vec
-    bl  <- getBlockChain
-    return $ IntBox ref bl
+    return $ IntBox ref
 
-readIntBox :: IntBox -> IO Int
-readIntBox IntBox { _box, _block } =
-  do c <- readCNFRef _box     
-     unsafeRead (getCompact c) 0
-
-writeIntBox :: IntBox -> Int -> IO ()
-writeIntBox IntBox { _box, _block } n =
-  do -- c <- appendCompact _block n
-     v <- readCNFRef _box
-     unsafeWrite (getCompact v) 0 n
-     -- writeCNFRef _box c
-
-{-
-readIntBox :: CNFRef s (IOVector Int) -> CIO s [Int]
-readIntBox ref = runCIO $ do c <- readCNFRef _box
-                             let vec = getCompact c
-                                 len = V.length vec
-                             liftIO $ forM [0 .. len - 1] $ unsafeRead vec
-  
+-- | Read all values from the IntBox.
 readIntBox :: IntBox -> IO [Int]
-readIntBox IntBox { .. } = undefined -- runCIO $ _readBox _box
-
-writeIntBox :: IntBox -> IO [Int]
-writeIntBox IntBox { .. } = undefined -- runCIO $ _writeBox _box
-
-mkCNFReader :: CNFRef s (IOVector Int) -> CIO s (IO [Int])
-mkCNFReader ref = undefined
-  
-{-
-readBox :: CIO s (CNFRef s (IOVector Int) -> IO [Int])
-readBox = return $ \ref -> do
+readIntBox IntBox { .. } = do
   c <- readCNFRef ref
   let vec = getCompact c
       len = V.length vec
-  liftIO . forM [0 .. len - 1] $ unsafeRead vec
--}
+  forM [0 .. len - 1] $ unsafeRead vec
 
-writeBox :: forall s. CNFRef s (IOVector Int) -> Int -> CIO s ()
-writeBox ref n = do
+-- | Insert a value into the IntBox.
+writeIntBox :: IntBox -> Int -> IO ()
+writeIntBox IntBox { .. } n = do
   c <- readCNFRef ref
   let vec = getCompact c
       len = V.length vec
-  vec' <- liftIO $ do
-            vec' <- grow vec 1
-            unsafeWrite vec' len n
-            return vec'
-  c' <- copyToCompact vec'
+  vec' <- grow vec 1
+  unsafeWrite vec' len n
+  c' <- newCompactIn ref vec'
   writeCNFRef ref c'
--}
