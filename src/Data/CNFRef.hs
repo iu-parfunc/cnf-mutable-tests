@@ -10,11 +10,13 @@ module Data.CNFRef (
     getBlockChain,
     newCNFRef,
     newCNFRefIn,
+    newCNFRefIn',
     newCompactIn,
     readCNFRef,
     writeCNFRef,
     ) where
 
+import Control.DeepSeq
 import Control.Monad.Reader
 import Data.CNFRef.DeepStrict
 import Data.Compact.Indexed
@@ -22,6 +24,11 @@ import Data.IORef
 
 -- | Mutable reference in a compact region.
 newtype CNFRef s a = CNFRef (Compact s (IORef a))
+
+instance DeepStrict a => NFData (CNFRef s a) where
+  rnf _ = ()
+
+instance DeepStrict a => DeepStrict (CNFRef s a) where
 
 -- | Pointer to the root of a compact region.
 type BlockChain s = Compact s ()
@@ -52,6 +59,14 @@ newCNFRefIn :: DeepStrict a => BlockChain s -> a -> IO (CNFRef s a)
 newCNFRefIn blk b = do
   ref <- newIORef b
   c <- appendCompact blk ref
+  return $ CNFRef c
+
+-- | Copy a boxed value into an existing compact region and return a
+-- new CNFRef that points to it.
+newCNFRefIn' :: DeepStrict b => CNFRef s a -> b -> IO (CNFRef s b)
+newCNFRefIn' (CNFRef c) b = do
+  ref <- newIORef b
+  c <- appendCompact c ref
   return $ CNFRef c
 
 -- | Copy a boxed value into an existing compact region and return a
