@@ -17,4 +17,5 @@ before_install:
   - stack --version
 
 script:
-  - make test
+  - stack build --verbose --cabal-verbose
+  - stack test
