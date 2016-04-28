@@ -16,10 +16,10 @@ library
   exposed-modules:     Data.CNFRef
                      , Data.CNFRef.DeepStrict
                      , Data.IntBox
-                     -- , Data.CList
-                     -- , Data.CList.NoFree
-  -- other-modules:     -- Data.CNFRef.Internal
+                     , Data.CList
                      , Data.CList.MList
+                     , Data.CList.NoFree
+  other-modules:       Data.CNFRef.Internal
   build-depends:       atomic-primops >=0.8.0.2
                      , base >=4.8
                      , compact >=1.0

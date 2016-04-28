@@ -7,14 +7,14 @@
 
 -- | A linked-list like data structure in a compact
 
-module Data.CList where -- (
-    -- CList,
-    -- newCList,
-    -- readCList,
-    -- pushCList,
-    -- popCList,
-    -- sizeCList,
-    -- ) where
+module Data.CList (
+    CList,
+    newCList,
+    readCList,
+    pushCList,
+    popCList,
+    sizeCList,
+    ) where
 
 import Control.DeepSeq
 import Control.Monad
@@ -35,27 +35,11 @@ instance NFData a => NFData (CList a) where
 
 deriving instance DeepStrict a => DeepStrict (CList a)
 
-data CList' a = forall s. CList' { rootList'    :: CNFRef s a
-                                 , readCNFRef'' :: CNFRef s a -> IO a
-                                 }
-
-factory :: CIO s (CNFRef s a -> IO a)
-factory = undefined
-
-f :: CList' Int -> IO Int
-f CList' { .. } = do -- c <- newCompact' 42
-                     readCNFRef'' rootList'
-
-newCList' :: DeepStrict a => IO (CList' a)
-newCList' = runCIO $ do root <- newCNFRef' undefined
-                        x <- factory
-                        return $ CList' root x
-
 -- | Create a new CList
 newCList :: DeepStrict a => IO (CList a)
-newCList = do
+newCList = runCIO $ do
   root <- newCNFRef Nil
-  free <- appendCNFRef root Nil
+  free <- newCNFRef Nil
   return $ CList root free
 
 -- | Read out a CList
@@ -69,8 +53,8 @@ pushCList CList { .. } a = do
   case getCompact c of
     Nil -> do
       vec <- newVec a
-      ref <- newIORef Nil
-      c' <- copyToCompact rootList $ Cons vec ref
+      ref <- newCNFRefIn' rootList Nil
+      c' <- newCompactIn rootList $ Cons vec ref
       appendMList rootList c'
     Cons _ _ ->
       appendMList rootList c
@@ -82,7 +66,7 @@ popCList CList { .. } = do
   let v = getCompact c
   case v of
     Just a -> do
-      c' <- copyToCompact rootList a
+      c' <- newCompactIn rootList a
       updateMList freeList c'
     Nothing -> return ()
   return v

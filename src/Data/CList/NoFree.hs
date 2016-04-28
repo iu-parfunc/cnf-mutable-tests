@@ -35,7 +35,7 @@ deriving instance DeepStrict a => DeepStrict (CList a)
 
 -- | Create a new CList
 newCList :: DeepStrict a => IO (CList a)
-newCList = do
+newCList = runCIO $ do
   root <- newCNFRef Nil
   return $ CList root
 
@@ -47,8 +47,8 @@ readCList CList { .. } = readMList rootList
 pushCList :: (DeepStrict a, Unbox a, Eq a) => CList a -> a -> IO ()
 pushCList CList { .. } a = do
   vec <- newVec a
-  ref <- newIORef Nil
-  c <- copyToCompact rootList $ Cons vec ref
+  ref <- newCNFRefIn' rootList Nil
+  c <- newCompactIn rootList $ Cons vec ref
   appendMList rootList c
 
 -- | Drop the value at the end of the CList
