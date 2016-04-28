@@ -17,5 +17,5 @@ before_install:
   - stack --version
 
 script:
-  - stack build --verbose --cabal-verbose
+  - stack build --fast
   - stack test
