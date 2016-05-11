@@ -61,5 +61,5 @@ extra-deps:
 - vector-binary-instances-0.2.3.1
 - vector-th-unbox-0.2.1.5
 compiler-check: newer-minor
-# This is the mutable-cnf-0.3 release:
-resolver: ghc-8.1.20160412
+# This is the mutable-cnf-0.4 release:
+resolver: ghc-8.1.20160510

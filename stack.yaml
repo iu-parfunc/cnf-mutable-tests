@@ -8,7 +8,7 @@ packages:
 system-ghc: true
 docker:
   auto-pull: true
-  repo: vikraman/ghc-mutable-cnf:0.3
+  repo: vikraman/ghc-mutable-cnf:0.4
 extra-deps:
 - Glob-0.7.5
 - abstract-deque-0.3
