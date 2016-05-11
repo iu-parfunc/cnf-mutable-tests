@@ -28,10 +28,10 @@ appendCompactNoShare (Compact !c) !a = Compact <$> C.appendCompactNoShare c a
 getCompact :: Compact s a -> a
 getCompact (Compact !c) = C.getCompact c
 
-inCompact :: Compact s a -> b -> Bool
+inCompact :: Compact s a -> b -> IO Bool
 inCompact (Compact !c) !b = C.inCompact c b
 
-isCompact :: a -> Bool
+isCompact :: a -> IO Bool
 isCompact = C.isCompact
 
 newCompact :: NFData a => Word -> a -> IO (Compact s a)

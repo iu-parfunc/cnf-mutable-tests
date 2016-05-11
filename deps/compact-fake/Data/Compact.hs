@@ -18,14 +18,14 @@ getCompact :: Compact a -> a
 getCompact (Compact a) = a
 
 -- | This one is hard to fake....
-inCompact :: Compact a -> b -> Bool
+inCompact :: Compact a -> b -> IO Bool
 inCompact = error "inCompact: cannot implement in this dummy implementation"
 
 -- | This one too:
--- 
+--
 -- We need to be able to enumarate all the reachable heap objects for
 -- arbitrary things in NFData...  that would be a feat of generic programming.
-isCompact :: a -> Bool
+isCompact :: a -> IO Bool
 isCompact = error "isCompact: cannot implement in this dummy implementation"
 
 newCompact :: NFData a => Word -> a -> IO (Compact a)
