@@ -16,6 +16,7 @@ import           Data.Compact
 import           Data.IntBox                 as IB
 import           Data.IORef
 import           Data.Primitive.MutVar
+import qualified Data.Vector                 as B
 import qualified Data.Vector.Mutable         as V
 import qualified Data.Vector.Unboxed.Mutable as U
 
@@ -37,11 +38,38 @@ readV a = go 0 (V.length a)
                      return (x : xs)
              else return []
 
+printU :: (U.Unbox a, Show a) => U.IOVector a -> IO ()
+printU a = go 0 (U.length a)
+  where go i l =
+          if i < l
+             then do x <- U.read a i
+                     print x
+                     go (i + 1) l
+             else return ()
+
 readU :: U.Unbox a => U.IOVector a -> IO [a]
 readU a = go 0 (U.length a)
   where go i l =
           if i < l
              then do x <- U.read a i
+                     xs <- go (i + 1) l
+                     return (x : xs)
+             else return []
+
+printB :: Show a => B.Vector a -> IO ()
+printB a = go 0 (B.length a)
+  where go i l =
+          if i < l
+             then do let x = a B.! i
+                     print x
+                     go (i + 1) l
+             else return ()
+
+readB :: B.Vector a -> IO [a]
+readB a = go 0 (B.length a)
+  where go i l =
+          if i < l
+             then do let x = a B.! i
                      xs <- go (i + 1) l
                      return (x : xs)
              else return []
@@ -58,8 +86,10 @@ tests =
         -- , mlistTests
         , clistTests
         , clistnfTests
-        -- crashes
-        -- , iovectorTests
+        , iovectorTests
+        , boxedvectorTests
+        , boxediovectorTests
+        , boxeduiovectorTests
         ]
 
 compactTests =
@@ -112,11 +142,16 @@ iovectorTests =
         [ testCase "V.IOVector Int in a compact" $
           do x :: V.IOVector Int <- V.new 5
              _ <- V.set x 42
+             printV x
              c <- newCompact 64 x
+             printV x
              y <- V.new 5
              _ <- V.set y 21
+             printV y
              c' <- appendCompact c y
+             printV y
              z :: [Int] <- readV (getCompact c')
+             print z
              z @?= replicate 5 21]
 
 intboxTests =
@@ -128,6 +163,43 @@ intboxTests =
              forM_ vs $ \v -> writeIntBox ib v
              n <- readIntBox ib
              n @?= vs]
+
+boxedvectorTests =
+    testGroup
+        "Boxed immutable Vector in a compact"
+        [ testCase "B.Vector Int in a compact" $
+          do let x :: B.Vector Int = B.replicate 5 42
+             c <- newCompact 64 x
+             let y :: B.Vector Int = B.replicate 5 21
+             c' <- appendCompact c y
+             z :: [Int] <- readB (getCompact c')
+             z @?= replicate 5 21]
+
+boxediovectorTests =
+    testGroup
+        "Boxed immutable Vector in a compact"
+        [ testCase "B.Vector (U.IOVector Int) in a compact" $
+          do v :: U.IOVector Int <- U.replicate 5 42
+             let x :: B.Vector (U.IOVector Int) = B.replicate 5 v
+             c <- newCompact 64 x
+             v' :: U.IOVector Int <- U.replicate 5 21
+             let y :: B.Vector (U.IOVector Int) = B.replicate 5 v'
+             c' <- appendCompact c y
+             z :: [U.IOVector Int] <- readB (getCompact c')
+             not (null z) @? "not empty" ]
+
+boxeduiovectorTests =
+    testGroup
+        "Boxed immutable Vector in a compact"
+        [ testCase "B.Vector (V.IOVector Int) in a compact" $
+          do v :: V.IOVector Int <- V.replicate 5 42
+             let x :: B.Vector (V.IOVector Int) = B.replicate 5 v
+             c <- newCompact 64 x
+             v' :: V.IOVector Int <- V.replicate 5 21
+             let y :: B.Vector (V.IOVector Int) = B.replicate 5 v'
+             c' <- appendCompact c y
+             z :: [V.IOVector Int] <- readB (getCompact c')
+             not (null z) @? "not empty" ]
 
 -- mlistTests =
 --     testGroup

@@ -85,8 +85,11 @@ instance NFData a => NFData (MutVar RealWorld a) where
   rnf a = unsafePerformIO $ modifyMutVar' a force
 
 instance NFData a => NFData (V.IOVector a) where
-  rnf a = unsafePerformIO $ modifyIOVector' a force
-    where
-      modifyIOVector' v f = go' v f 0 (V.length a)
-      go' v f i l = when (i < l) $
-        V.unsafeModify v f i >> go' v f (i + 1) l
+  rnf a = ()
+
+-- instance NFData a => NFData (V.IOVector a) where
+--   rnf a = unsafePerformIO $ modifyIOVector' a force
+--     where
+--       modifyIOVector' v f = go' v f 0 (V.length a)
+--       go' v f i l = when (i < l) $
+--         V.unsafeModify v f i >> go' v f (i + 1) l
