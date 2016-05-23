@@ -1,9 +1,12 @@
+{-# LANGUAGE DeriveAnyClass            #-}
+{-# LANGUAGE DeriveGeneric             #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE NamedFieldPuns            #-}
 {-# LANGUAGE Rank2Types                #-}
 {-# LANGUAGE RecordWildCards           #-}
+{-# LANGUAGE StandaloneDeriving        #-}
 {-# LANGUAGE Strict                    #-}
 {-# LANGUAGE StrictData                #-}
 {-# LANGUAGE TypeSynonymInstances      #-}
@@ -20,17 +23,21 @@ import           Data.Compact.Indexed
 import qualified Data.Map.Strict             as Map
 import           Data.Vector.Unboxed.Mutable as V
 import           Data.Word
+import           GHC.Generics
 
-type Msg = (Int, IOVector Int)
+data Msg = Msg Int (IOVector Int)
+  deriving (Generic, NFData, DeepStrict)
 
 data Chan s where
   Nil :: BlockChain s -> Chan s
   Cons :: Compact s Msg -> CNFRef s (Chan s) -> Chan s
 
-instance NFData (Chan s) where
+instance NFData (Compact s a) where
   rnf _ = ()
 
-instance DeepStrict (Chan s)
+deriving instance Generic (Chan s)
+deriving instance NFData (Chan s)
+deriving instance DeepStrict (Chan s)
 
 data ChanBox = forall s. ChanBox { box  :: CNFRef s (Chan s)
                                  , free :: CNFRef s (Chan s)
@@ -42,11 +49,11 @@ newMessage free n = do
   case getCompact c of
     Nil bl -> do
       vec <- V.replicate 1024 n
-      appendCompact bl (n, vec)
+      appendCompact bl $ Msg n vec
     Cons msg ref -> do
-      let (_, vec) = getCompact msg
+      let Msg _ vec = getCompact msg
       forM_ [0 .. 1023] $ V.write vec n
-      c' <- newCompactIn free (n, vec)
+      c' <- newCompactIn free $ Msg n vec
       p <- readCNFRef ref
       writeCNFRef free p
       return c'
@@ -72,8 +79,10 @@ deleteMinChan ChanBox { .. } = do
   c <- readCNFRef box
   let chan = getCompact c
   case chan of
-    Nil _      -> return ()
-    Cons c ref -> go (fst $ getCompact c) chan ref
+    Nil _ -> return ()
+    Cons c ref ->
+      let Msg n _ = getCompact c
+      in go n chan ref
 
   where
     go n chan ref = do
@@ -82,7 +91,7 @@ deleteMinChan ChanBox { .. } = do
       case chan' of
         Nil _ -> return ()
         Cons c ref -> do
-          let (n', _) = getCompact c
+          let Msg n' _ = getCompact c
           if n < n'
             then go n chan ref
             else go n' chan' ref
