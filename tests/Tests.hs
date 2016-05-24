@@ -142,16 +142,11 @@ iovectorTests =
         [ testCase "V.IOVector Int in a compact" $
           do x :: V.IOVector Int <- V.new 5
              _ <- V.set x 42
-             printV x
              c <- newCompact 64 x
-             printV x
              y <- V.new 5
              _ <- V.set y 21
-             printV y
              c' <- appendCompact c y
-             printV y
              z :: [Int] <- readV (getCompact c')
-             print z
              z @?= replicate 5 21]
 
 intboxTests =
