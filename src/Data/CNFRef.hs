@@ -25,6 +25,9 @@ import Data.IORef
 -- | Mutable reference in a compact region.
 newtype CNFRef s a = CNFRef (Compact s (IORef a))
 
+instance Eq (CNFRef s a) where
+  CNFRef c == CNFRef c' = getCompact c == getCompact c'
+
 instance DeepStrict a => NFData (CNFRef s a) where
   rnf _ = ()
 
