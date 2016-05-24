@@ -5,10 +5,11 @@
 
 module Main where
 
-import Data.Foldable
+import Control.Monad
 import Test.Tasty
 import Test.Tasty.HUnit
 
+import qualified Data.ChanBox.V1             as CB1
 import qualified Data.CList                  as CL
 import           Data.CList.MList            as ML
 import qualified Data.CList.NoFree           as CLNF
@@ -90,6 +91,7 @@ tests =
         , boxedvectorTests
         , boxediovectorTests
         , boxeduiovectorTests
+        , chanboxv1Tests
         ]
 
 compactTests =
@@ -299,6 +301,28 @@ clistnfTests =
     vs :: [Int]
     vs = ws ++ ws
     ws = [1 .. 100]
+
+chanboxv1Tests =
+    testGroup
+        "ChanBox.V1"
+        [ testCase "newBox" $
+          do cb <- CB1.newBox
+             sz <- CB1.sizeBox cb
+             sz @?= 0
+        , testCase "pushMsg" $
+          do cb <- CB1.newBox
+             msgs <- forM vs $ \i -> CB1.newMessage cb i
+             forM msgs $ CB1.pushMsg cb
+             sz <- CB1.sizeBox cb
+             sz @?= 2 * l
+        ]
+
+  where
+    l :: Int
+    l = 200
+    vs :: [Int]
+    vs = ws ++ ws
+    ws = [1 .. l]
 
 main :: IO ()
 main = defaultMain tests
