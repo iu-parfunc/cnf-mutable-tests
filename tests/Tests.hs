@@ -83,14 +83,14 @@ tests =
         , iorefTests
         , mutvarTests
         , uiovectorTests
-        , intboxTests
-        -- , mlistTests
-        , clistTests
-        , clistnfTests
         , iovectorTests
         , boxedvectorTests
         , boxediovectorTests
         , boxeduiovectorTests
+        , intboxTests
+        -- , mlistTests
+        , clistTests
+        , clistnfTests
         , chanboxv1Tests
         ]
 
