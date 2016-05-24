@@ -68,7 +68,7 @@ dropMinChan ChanBox { .. } = do
   let boxVec = getCompact c
       freeVec = getCompact c'
       l = B.length boxVec
-  when (l > maxLengthChan) $ do
+  when (l >= maxLengthChan) $ do
     let v = B.head boxVec
         boxVec' = B.tail boxVec
         freeVec' = cons v freeVec

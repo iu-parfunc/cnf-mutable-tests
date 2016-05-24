@@ -108,7 +108,7 @@ dropMinChan ChanBox { .. } = do
   c <- readCNFRef $ front box
   let boxMsgs = getCompact c
   l <- lengthMsgList boxMsgs
-  when (l > maxLengthChan) $ do
+  when (l >= maxLengthChan) $ do
     v <- headMsgList boxMsgs
     boxMsgs' <- tailMsgList boxMsgs
     let freeMsgs' = Cons v $ front free
