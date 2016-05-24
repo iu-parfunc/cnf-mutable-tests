@@ -10,6 +10,7 @@ import Test.Tasty
 import Test.Tasty.HUnit
 
 import qualified Data.ChanBox.V1             as CB1
+import qualified Data.ChanBox.V2             as CB2
 import qualified Data.CList                  as CL
 import           Data.CList.MList            as ML
 import qualified Data.CList.NoFree           as CLNF
@@ -92,6 +93,8 @@ tests =
         , clistTests
         , clistnfTests
         , chanboxv1Tests
+        -- broken
+        -- , chanboxv2Tests
         ]
 
 compactTests =
@@ -314,12 +317,32 @@ chanboxv1Tests =
              msgs <- forM vs $ \i -> CB1.newMessage cb i
              forM msgs $ CB1.pushMsg cb
              sz <- CB1.sizeBox cb
-             sz @?= 2 * l
-        ]
+             sz @?= 2 * l]
 
   where
     l :: Int
     l = 200
+    vs :: [Int]
+    vs = ws ++ ws
+    ws = [1 .. l]
+
+chanboxv2Tests =
+    testGroup
+        "ChanBox.V2"
+        [ testCase "newBox" $
+          do cb <- CB2.newBox
+             sz <- CB2.sizeBox cb
+             sz @?= 0
+        , testCase "pushMsg" $
+          do cb <- CB2.newBox
+             msgs <- forM vs $ \i -> CB2.newMessage cb i
+             forM msgs $ CB2.pushMsg cb
+             sz <- CB2.sizeBox cb
+             sz @?= 2 * l]
+
+  where
+    l :: Int
+    l = 5
     vs :: [Int]
     vs = ws ++ ws
     ws = [1 .. l]
