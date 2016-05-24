@@ -20,6 +20,7 @@ library
                      , Data.CList.MList
                      , Data.CList.NoFree
                      , Data.ChanBox
+                     , Data.ChanBox.V1
   other-modules:       Data.CNFRef.Internal
   build-depends:       atomic-primops >=0.8.0.2
                      , base >=4.8
