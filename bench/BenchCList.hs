@@ -38,7 +38,7 @@ defaultEnv = Env
   , range = (2 ^ 64) &= help "Range for random values"
   , criterion = [] &= help "Arguments to criterion"
   , randomInts = empty &= ignore
-  } &= CA.verbosity &= program "bench"
+  } &= CA.verbosity &= program "bench-clist"
 
 setupEnv :: Env -> IO Env
 setupEnv env@Env { .. } = do
