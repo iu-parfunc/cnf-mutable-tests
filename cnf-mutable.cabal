@@ -19,6 +19,7 @@ library
                      , Data.CList
                      , Data.CList.MList
                      , Data.CList.NoFree
+                     , Data.ChanBox.V0
                      , Data.ChanBox.V1
                      , Data.ChanBox.V2
   other-modules:       Data.CNFRef.Internal

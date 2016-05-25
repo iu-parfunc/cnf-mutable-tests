@@ -18,6 +18,7 @@ import System.Environment
 import System.Random.PCG.Fast.Pure as PCG
 import Utils
 
+import qualified Data.ChanBox.V0 as CB0
 import qualified Data.ChanBox.V1 as CB1
 import qualified Data.ChanBox.V2 as CB2
 
@@ -31,7 +32,7 @@ data Env = Env { n          :: Int
 
 defaultEnv :: Env
 defaultEnv = Env
-  { n = (10 ^ 5) &= name "N" &= help "Number of messages"
+  { n = (10 ^ 3) &= name "N" &= help "Number of messages"
   , range = (2 ^ 63 - 1) &= help "Integer range for messages"
   , size = (10 ^ 7) &= help "Size of precomputed random vector"
   , criterion = [] &= help "Arguments to criterion"
@@ -49,6 +50,13 @@ config = defaultConfig { reportFile = Just "report.html"
                        , csvFile = Just "report.csv"
                        }
 
+cbv0Bench :: Env -> IO ()
+cbv0Bench Env { .. } = do
+  cb <- CB0.newBox
+  for_ 0 n $ \i -> do
+    msg <- CB0.newMessage cb $ randomInts ! (i `mod` size)
+    CB0.pushMsg cb msg
+
 cbv1Bench :: Env -> IO ()
 cbv1Bench Env { .. } = do
   cb <- CB1.newBox
@@ -62,5 +70,8 @@ main = do
   withArgs criterion $
     defaultMainWith config
       [ env (setupEnv args) $ \env ->
-        bgroup "ChanBox" [bgroup "Data.ChanBox.V1" [bench (show n) $ nfIO (cbv1Bench env)]]
+        bgroup "ChanBox"
+          [ bgroup "Data.ChanBox.V0" [bench (show n) $ nfIO (cbv0Bench env)]
+          , bgroup "Data.ChanBox.V1" [bench (show n) $ nfIO (cbv1Bench env)]
+          ]
       ]

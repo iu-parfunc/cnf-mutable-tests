@@ -9,18 +9,22 @@ import Control.Monad
 import Test.Tasty
 import Test.Tasty.HUnit
 
-import qualified Data.ChanBox.V1             as CB1
-import qualified Data.ChanBox.V2             as CB2
-import qualified Data.CList                  as CL
-import           Data.CList.MList            as ML
-import qualified Data.CList.NoFree           as CLNF
 import           Data.Compact
-import           Data.IntBox                 as IB
 import           Data.IORef
 import           Data.Primitive.MutVar
 import qualified Data.Vector                 as B
 import qualified Data.Vector.Mutable         as V
 import qualified Data.Vector.Unboxed.Mutable as U
+
+import Data.IntBox as IB
+
+import qualified Data.CList        as CL
+import           Data.CList.MList  as ML
+import qualified Data.CList.NoFree as CLNF
+
+import qualified Data.ChanBox.V0 as CB0
+import qualified Data.ChanBox.V1 as CB1
+import qualified Data.ChanBox.V2 as CB2
 
 printV :: Show a => V.IOVector a -> IO ()
 printV a = go 0 (V.length a)
@@ -304,6 +308,27 @@ clistnfTests =
     vs :: [Int]
     vs = ws ++ ws
     ws = [1 .. 100]
+
+chanboxv0Tests =
+    testGroup
+        "ChanBox.V0"
+        [ testCase "newBox" $
+          do cb <- CB0.newBox
+             sz <- CB0.sizeBox cb
+             sz @?= 0
+        , testCase "pushMsg" $
+          do cb <- CB0.newBox
+             msgs <- forM vs $ \i -> CB0.newMessage cb i
+             forM msgs $ CB0.pushMsg cb
+             sz <- CB0.sizeBox cb
+             sz @?= 2 * l]
+
+  where
+    l :: Int
+    l = 200
+    vs :: [Int]
+    vs = ws ++ ws
+    ws = [1 .. l]
 
 chanboxv1Tests =
     testGroup
