@@ -26,23 +26,17 @@ instance DeepStrict (Vector Msg) where
 data ChanBox = forall s. ChanBox { box :: Chan s, free :: Chan s }
 
 newMessage :: ChanBox -> Int -> IO Msg
-newMessage ChanBox { .. } n =
-  getCompact <$> newMessage' free n
-
-newMessage' :: Chan s -> Int -> IO (Compact s Msg)
-newMessage' free n = do
+newMessage ChanBox { .. } n = do
   c <- readCNFRef free
   let vec = getCompact c
   case B.length vec of
-    0 -> do
-      msg <- V.replicate 1024 n
-      appendCompactNoShare c msg
+    0 -> V.replicate 1024 n
     _ -> do
       let msg = B.head vec
       M.forM_ [0 .. 1023] $ V.write msg n
       c' <- appendCompactNoShare c $ B.tail vec
       writeCNFRef free c'
-      appendCompactNoShare c msg
+      return msg
 
 newBox :: IO ChanBox
 newBox = runCIO $ do

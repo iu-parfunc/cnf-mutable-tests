@@ -45,23 +45,16 @@ data Chan s = Chan { front :: CNFRef s (MsgList s), rear :: CNFRef s (MsgList s)
 data ChanBox = forall s. ChanBox { box :: Chan s, free :: Chan s }
 
 newMessage :: ChanBox -> Int -> IO Msg
-newMessage ChanBox { .. } n =
-  getCompact <$> newMessage' free n
-
-newMessage' :: Chan s -> Int -> IO (Compact s Msg)
-newMessage' Chan { .. } n = do
-  print n
+newMessage (ChanBox _ (Chan front _)) n = do
   c <- readCNFRef front
   case getCompact c of
-    Nil bl -> do
-      msg <- V.replicate 1024 n
-      appendCompact bl msg
+    Nil _ -> V.replicate 1024 n
     Cons msg ref -> do
       let vec = getCompact msg
       forM_ [0 .. 1023] $ V.write vec n
       p <- readCNFRef ref
       writeCNFRef front p
-      appendCompact c vec
+      return vec
 
 newBox :: IO ChanBox
 newBox = runCIO $ do
@@ -112,27 +105,27 @@ dropMinChan ChanBox { .. } = do
     v <- headMsgList boxMsgs
     boxMsgs' <- tailMsgList boxMsgs
     let freeMsgs' = Cons v $ front free
-    c' <- appendCompact c freeMsgs'
+    c' <- appendCompactNoShare c freeMsgs'
     writeCNFRef (front free) c'
-    c' <- appendCompact c boxMsgs'
+    c' <- appendCompactNoShare c boxMsgs'
     writeCNFRef (front box) c'
 
 pushMsg :: ChanBox -> Msg -> IO ()
 pushMsg b@ChanBox { .. } msg = do
   -- FIXME:
   bl <- newCompactIn (rear box) ()
-  c <- appendCompact bl msg
+  c <- appendCompactNoShare bl msg
   p <- readCNFRef (rear box)
   case getCompact p of
     Nil bl -> do
       let rear' = Cons c (rear box)
-      c' <- appendCompact bl rear'
+      c' <- appendCompactNoShare bl rear'
       writeCNFRef (front box) c'
       writeCNFRef (rear box) c'
     Cons msg ref -> do
       -- dropMinChan b
       ref' <- newCNFRefIn' (rear box) (Nil bl)
       let rear' = Cons c ref'
-      c' <- appendCompact bl rear'
+      c' <- appendCompactNoShare bl rear'
       writeCNFRef ref c'
       writeCNFRef (rear box) c'
