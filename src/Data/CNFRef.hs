@@ -43,7 +43,7 @@ type CIO s a = ReaderT (BlockChain s) IO a
 -- region.
 runCIO :: (forall s. CIO s a) -> IO a
 runCIO cio = do
-  c <- newCompact 4096 ()
+  c <- newCompactNoShare 65536 ()
   runReaderT cio c
 
 -- | Copy a boxed value into a compact region and create a new CNFRef
@@ -53,7 +53,7 @@ newCNFRef a = do
   block <- ask
   liftIO $ do
     ref <- newIORef a
-    c <- appendCompact block ref
+    c <- appendCompactNoShare block ref
     return $ CNFRef c
 
 -- | Copy a boxed value into an existing compact region and return a
@@ -61,7 +61,7 @@ newCNFRef a = do
 newCNFRefIn :: DeepStrict a => BlockChain s -> a -> IO (CNFRef s a)
 newCNFRefIn blk b = do
   ref <- newIORef b
-  c <- appendCompact blk ref
+  c <- appendCompactNoShare blk ref
   return $ CNFRef c
 
 -- | Copy a boxed value into an existing compact region and return a
@@ -69,13 +69,13 @@ newCNFRefIn blk b = do
 newCNFRefIn' :: DeepStrict b => CNFRef s a -> b -> IO (CNFRef s b)
 newCNFRefIn' (CNFRef c) b = do
   ref <- newIORef b
-  c <- appendCompact c ref
+  c <- appendCompactNoShare c ref
   return $ CNFRef c
 
 -- | Copy a boxed value into an existing compact region and return a
 -- new Compact that points to it.
 newCompactIn :: DeepStrict b => CNFRef s a -> b -> IO (Compact s b)
-newCompactIn (CNFRef c) a = appendCompact c a
+newCompactIn (CNFRef c) a = appendCompactNoShare c a
 
 -- | Return the blockchain for a region.
 getBlockChain :: CIO s (BlockChain s)
@@ -88,7 +88,7 @@ readCNFRef :: DeepStrict a => CNFRef s a -> IO (Compact s a)
 readCNFRef (CNFRef c) = do
   let ref = getCompact c
   a <- readIORef ref
-  appendCompact c a
+  appendCompactNoShare c a
 
 -- | Point a CNFRef at a new value that already lives in the correct
 -- region.
