@@ -36,13 +36,13 @@ newMessage' free n = do
   case B.length vec of
     0 -> do
       msg <- V.replicate 1024 n
-      appendCompact c msg
+      appendCompactNoShare c msg
     _ -> do
       let msg = B.head vec
       M.forM_ [0 .. 1023] $ V.write msg n
-      c' <- appendCompact c $ B.tail vec
+      c' <- appendCompactNoShare c $ B.tail vec
       writeCNFRef free c'
-      appendCompact c msg
+      appendCompactNoShare c msg
 
 newBox :: IO ChanBox
 newBox = runCIO $ do
@@ -72,9 +72,9 @@ dropMinChan ChanBox { .. } = do
     let v = B.head boxVec
         boxVec' = B.tail boxVec
         freeVec' = cons v freeVec
-    c' <- appendCompact c freeVec'
+    c' <- appendCompactNoShare c freeVec'
     writeCNFRef free c'
-    c' <- appendCompact c boxVec'
+    c' <- appendCompactNoShare c boxVec'
     writeCNFRef box c'
 
 pushMsg :: ChanBox -> Msg -> IO ()
@@ -83,5 +83,5 @@ pushMsg b@ChanBox { .. } msg = do
   c <- readCNFRef box
   let boxVec = getCompact c
       boxVec' = snoc boxVec msg
-  c' <- appendCompact c boxVec'
+  c' <- appendCompactNoShare c boxVec'
   writeCNFRef box c'
