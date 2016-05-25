@@ -18,10 +18,10 @@ import System.Environment
 import System.Random.PCG.Fast.Pure as PCG
 import Utils
 
-import qualified Data.CList        as CL
-import qualified Data.CList.NoFree as CLNF
+import qualified Data.ChanBox.V1 as CB1
+import qualified Data.ChanBox.V2 as CB2
 
-data Env = Env { n          :: Int64
+data Env = Env { n          :: Int
                , range      :: Int
                , size       :: Int
                , criterion  :: [String]
@@ -50,7 +50,11 @@ config = defaultConfig { reportFile = Just "report.html"
                        }
 
 cbv1Bench :: Env -> IO ()
-cbv1Bench Env { .. } = undefined
+cbv1Bench Env { .. } = do
+  cb <- CB1.newBox
+  for_ 1 n $ \i -> do
+    msg <- CB1.newMessage cb $ randomInts ! (i `mod` size)
+    CB1.pushMsg cb msg
 
 main :: IO ()
 main = do
