@@ -18,4 +18,4 @@ fi
 
 export PATH=$NEWGHC:$PATH
 
-export STACK_YAML=stack-7.11.cnf.yaml
+export STACK_YAML=stack.cnf.yaml
