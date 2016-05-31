@@ -34,21 +34,17 @@ data Chan s = Chan { vec   :: Compact s (Vector Msg)
 data ChanBox = forall s. ChanBox { box :: Chan s }
 
 newMessage :: ChanBox -> Int -> IO Msg
-newMessage ChanBox { .. } n = V.replicate 1024 n
-
--- FIXME: CNF crashes with large size
-maxLengthChan :: Int
-maxLengthChan = 20000
-
-(|+|) :: Int -> Int -> Int
-x |+| y = (x + y) `mod` (maxLengthChan - 1)
+newMessage _ = V.replicate 1024
 
 newBox :: IO ChanBox
-newBox = runCIO $ do
+newBox = newBox' 20
+
+newBox' :: Int -> IO ChanBox
+newBox' maxSize = runCIO $ do
   front <- newCNFRef 0
   rear <- newCNFRef 0
   msg <- V.replicate 1024 0
-  let vec = B.replicate maxLengthChan msg
+  let vec = B.replicate (maxSize + 1) msg
   c <- liftIO $ newCompactIn front vec
   let box = Chan c front rear
   return $ ChanBox box
@@ -57,9 +53,10 @@ lengthChan :: Chan s -> IO Int
 lengthChan Chan { .. } = do
   start <- getCompact <$> readCNFRef front
   end <- getCompact <$> readCNFRef rear
+  let maxSize = B.length (getCompact vec)
   return $ if end >= start
              then end - start
-             else end - start + maxLengthChan + 1
+             else end - start + maxSize
 
 sizeBox :: ChanBox -> IO Int
 sizeBox ChanBox { .. } = lengthChan box
@@ -69,8 +66,8 @@ dropMinChan ChanBox { .. } =
   case box of
     Chan { .. } -> do
       start <- getCompact <$> readCNFRef front
-      -- end <- getCompact <$> readCNFRef rear
-      let start' = start |+| 1
+      let maxSize = B.length (getCompact vec)
+          start' = (start + 1) `mod` maxSize
       c <- newCompactIn front start'
       writeCNFRef front c
 
@@ -78,17 +75,17 @@ pushMsg :: ChanBox -> Msg -> IO ()
 pushMsg b@ChanBox { .. } msg =
   case box of
     Chan { .. } -> do
-      sz <- lengthChan box
-      when (sz == maxLengthChan) $ dropMinChan b
-      -- start <- getCompact <$> readCNFRef front
+      size <- lengthChan box
+      let maxSize = B.length (getCompact vec)
+      when (size == maxSize - 1) $ dropMinChan b
       end <- getCompact <$> readCNFRef rear
-      let end' = end |+| 1
+      let end' = (end + 1) `mod` maxSize
           v = getCompact vec
           msg' = v ! end
       M.forM_ [0 .. 1023] $ \i -> do
-        a <- unsafeRead msg i
+        a <- V.read msg i
         c <- appendCompactNoShare vec a
         -- FIXME: unsafe interface
-        unsafeWrite msg' i (getCompact c)
+        V.write msg' i (getCompact c)
       c <- newCompactIn rear end'
       writeCNFRef rear c
