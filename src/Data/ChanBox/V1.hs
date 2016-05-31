@@ -33,6 +33,9 @@ data Chan s = Chan { vec   :: Compact s (Vector Msg)
 
 data ChanBox = forall s. ChanBox { box :: Chan s }
 
+instance NFData ChanBox where
+  rnf ChanBox { .. } = rnf box
+
 newMessage :: ChanBox -> Int -> IO Msg
 newMessage _ = V.replicate 1024
 

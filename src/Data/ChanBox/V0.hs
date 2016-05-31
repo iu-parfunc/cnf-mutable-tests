@@ -17,6 +17,9 @@ type Chan s = IORef (Vector Msg)
 
 data ChanBox = forall s. ChanBox { box :: Chan s }
 
+instance NFData ChanBox where
+  rnf ChanBox { .. } = rnf box
+
 newMessage :: ChanBox -> Int -> IO Msg
 newMessage ChanBox { .. } n = V.replicate 1024 n
 
