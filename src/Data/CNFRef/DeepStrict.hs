@@ -13,6 +13,7 @@ module Data.CNFRef.DeepStrict where
 
 import Control.DeepSeq
 import Control.Monad
+import Data.Compact.Indexed
 import Data.Int
 import Data.Word
 import GHC.Generics
@@ -69,7 +70,7 @@ deriving instance DeepStrict a => DeepStrict [a]
 deriving instance (DeepStrict a, DeepStrict b) => DeepStrict (Either a b)
 deriving instance (DeepStrict a, DeepStrict b) => DeepStrict (a, b)
 
-deriving instance DeepStrict a => DeepStrict (V.IOVector a)
+instance DeepStrict a => DeepStrict (V.IOVector a)
 instance DeepStrict a => DeepStrict (U.IOVector a)
 
 -- NFData instances for using compact (debatable)
@@ -93,3 +94,8 @@ instance NFData a => NFData (V.IOVector a) where
 --       modifyIOVector' v f = go' v f 0 (V.length a)
 --       go' v f i l = when (i < l) $
 --         V.unsafeModify v f i >> go' v f (i + 1) l
+
+instance NFData a => NFData (Compact s a) where
+  rnf _ = ()
+
+instance DeepStrict a => DeepStrict (Compact s a)

@@ -25,10 +25,6 @@ data MsgList s where
   Nil :: BlockChain s -> MsgList s
   Cons :: Compact s Msg -> CNFRef s (MsgList s) -> MsgList s
 
-instance NFData a => NFData (Compact s a) where
-  rnf _ = ()
-instance DeepStrict a => DeepStrict (Compact s a) where
-
 deriving instance Generic (MsgList s)
 deriving instance NFData (MsgList s)
 deriving instance DeepStrict (MsgList s)
