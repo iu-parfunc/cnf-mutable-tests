@@ -41,7 +41,7 @@ data Env = Env { randomInts :: VU.Vector Int
 
 defaultFlags :: Flags
 defaultFlags = Flags
-  { size = (10 ^ 3) &= name "size" &= help "Maximum size of ChanBox"
+  { size = (10 ^ 2) &= name "size" &= help "Maximum size of ChanBox"
   , threads = 4 &= name "threads" &= help "Number of threads for the concurrent benchmark"
   , range = (2 ^ 63 - 1) &= help "Integer range for messages"
   , randomSize = (10 ^ 7) &= help "Size of precomputed random vector"
@@ -52,10 +52,10 @@ setupEnv :: Flags -> IO Env
 setupEnv Flags { .. } = do
   gen <- PCG.createSystemRandom
   randomInts <- VU.replicateM randomSize (uniformR (0, range) gen :: IO Int)
-  cb0 <- CB0.newBox
-  cb1 <- CB1.newBox' size
-  cb0s <- V.replicateM threads CB0.newBox
-  cb1s <- V.replicateM threads (CB1.newBox' size)
+  cb0 <- CB0.newBox size
+  cb1 <- CB1.newBox size
+  cb0s <- V.replicateM threads (CB0.newBox size)
+  cb1s <- V.replicateM threads (CB1.newBox size)
   return $ Env randomInts cb0 cb1 cb0s cb1s
 
 config :: Config
