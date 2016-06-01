@@ -1,9 +1,7 @@
 {-# LANGUAGE DeriveAnyClass            #-}
 {-# LANGUAGE DeriveGeneric             #-}
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE RecordWildCards           #-}
-{-# LANGUAGE StandaloneDeriving        #-}
 {-# LANGUAGE Strict                    #-}
 {-# LANGUAGE StrictData                #-}
 
@@ -13,125 +11,109 @@ module Data.ChanBox.V2 where
 
 import Control.DeepSeq
 import Control.Monad
+import Control.Monad.Utils
 import Data.CNFRef
 import Data.CNFRef.DeepStrict
 import Data.Compact.Indexed
-import Data.Vector.Unboxed.Mutable as V
+import Data.Vector.Unboxed.Mutable as VU
 import GHC.Generics
+import System.IO.Unsafe
 
 type Msg = IOVector Int
 
-data MsgList s where
-  Nil :: BlockChain s -> MsgList s
-  Cons :: Compact s Msg -> CNFRef s (MsgList s) -> MsgList s
-
-deriving instance Generic (MsgList s)
-deriving instance NFData (MsgList s)
-deriving instance DeepStrict (MsgList s)
-
-data Chan s = Chan { block :: BlockChain s, front :: MsgList s, rear :: MsgList s }
+data MsgList s = Nil (BlockChain s)
+               | Cons (Compact s Msg) (MsgList s)
   deriving (Generic, NFData, DeepStrict)
 
-type ChanRef s = CNFRef s (Chan s)
+data Chan s = Chan { front :: CNFRef s (MsgList s)
+                   , rear  :: CNFRef s (MsgList s)
+                   , size  :: CNFRef s Int
+                   }
+  deriving (Generic, NFData, DeepStrict)
 
-data ChanBox = forall s. ChanBox { box :: ChanRef s, free :: ChanRef s }
+data ChanBox = forall s. ChanBox { box     :: Chan s
+                                 , free    :: Chan s
+                                 , maxSize :: Int
+                                 }
 
 newMessage :: ChanBox -> Int -> IO Msg
 newMessage ChanBox { .. } n = do
-  chan@(Chan _ front _) <- getCompact <$> readCNFRef free
-  case front of
-    Nil _ -> V.replicate 1024 n
-    Cons msg ref -> do
-      let vec = getCompact msg
-      forM_ [0 .. 1023] $ V.write vec n
-      chan' <- tailChan chan
-      c <- newCompactIn ref chan'
-      writeCNFRef free c
-      return vec
+  m <- dropChan free
+  case m of
+    Nothing -> do
+      msg <- VU.replicate 1024 n
+      getCompact <$> newCompactIn (front box) msg
+    Just c -> do
+      let msg' = getCompact c
+      for_ 0 1023 $ \i -> unsafeWrite msg' i n
+      c' <- newCompactIn (front box) msg'
+      return $ getCompact c'
 
-newBox :: IO ChanBox
-newBox = runCIO $ do
+{-# INLINE newBox' #-}
+newBox' :: IO ChanBox
+newBox' = newBox 2000
+
+newBox :: Int -> IO ChanBox
+newBox maxSize = runCIO $ do
   bl <- getBlockChain
-  boxRef <- newCNFRef $ Chan bl (Nil bl) (Nil bl)
-  freeRef <- newCNFRef $ Chan bl (Nil bl) (Nil bl)
-  return $ ChanBox boxRef freeRef
+  ref <- newCNFRef (Nil bl)
+  ref' <- newCNFRef (Nil bl)
+  sz <- newCNFRef 0
+  sz' <- newCNFRef 0
+  let box = Chan ref ref sz
+      free = Chan ref' ref' sz'
+  return $ ChanBox box free maxSize
 
-lengthChan :: Chan s -> IO Int
-lengthChan Chan { .. } = go front
-  where
-    go p =
-      case p of
-        Nil _ -> return 0
-        Cons _ ref -> do
-          c <- readCNFRef ref
-          l <- go (getCompact c)
-          return $ l + 1
 
+{-# INLINE sizeChan #-}
+sizeChan :: Chan s -> IO Int
+sizeChan Chan { .. } =
+  getCompact <$> readCNFRef size
+
+{-# INLINE sizeBox #-}
 sizeBox :: ChanBox -> IO Int
-sizeBox ChanBox { .. } = do
-  boxChan <- getCompact <$> readCNFRef box
-  freeChan <- getCompact <$> readCNFRef free
-  liftM2 (+) (lengthChan boxChan) (lengthChan freeChan)
+sizeBox ChanBox { .. } =
+  liftM2 (+) (sizeChan box) (sizeChan free)
 
-headChan :: Chan s -> IO (Compact s Msg)
-headChan Chan { .. } =
-  case front of
-    Nil _      -> error "head on empty list"
-    Cons msg _ -> return msg
-
-tailChan :: Chan s -> IO (Chan s)
-tailChan Chan { .. } =
-  case front of
-    Nil _ -> error "tail on empty list"
-    Cons _ ref -> do
-      p <- getCompact <$> readCNFRef ref
-      return $ Chan block p rear
-
-consChan :: Compact s Msg -> ChanRef s -> IO ()
-consChan msg ref = do
-  Chan block front rear <- getCompact <$> readCNFRef ref
-  p <- newCNFRefIn block front
-  let front' = Cons msg p
-      rear' =
-        case rear of
-          Nil _ -> front
-          r     -> r
-  c <- newCompactIn ref $ Chan block front' rear'
-  writeCNFRef ref c
-
-snocChan :: ChanRef s -> Compact s Msg -> IO ()
-snocChan ref msg = do
-  Chan block front rear <- getCompact <$> readCNFRef ref
-  p <- newCNFRefIn block (Nil block)
-  let rear' = Cons msg p
-      front' =
-        case front of
-          Nil _ -> rear'
-          f     -> f
-  case rear of
+pushChan :: Chan s -> Compact s Msg -> IO ()
+pushChan Chan { .. } c = do
+  r <- getCompact <$> readCNFRef rear
+  case r of
     Nil _ -> do
-      c' <- newCompactIn ref $ Chan block front' rear'
-      writeCNFRef ref c'
-    Cons _ p -> do
-      c' <- newCompactIn p rear'
-      writeCNFRef p c'
+      r' <- newCompactIn rear (Cons c r)
+      writeCNFRef front r'
+      writeCNFRef rear r'
+    Cons _ end -> do
+      r' <- newCompactIn rear (Cons c end)
+      writeCNFRef rear r'
+  sz <- getCompact <$> readCNFRef size
+  sz' <- newCompactIn size (sz + 1)
+  writeCNFRef size sz'
 
-maxLengthChan :: Int
-maxLengthChan = 200000
+dropChan :: Chan s -> IO (Maybe (Compact s Msg))
+dropChan Chan { .. } = do
+  f <- getCompact <$> readCNFRef front
+  case f of
+    Nil _ -> return Nothing
+    Cons c next -> do
+      f' <- newCompactIn front next
+      writeCNFRef front f'
+      sz <- getCompact <$> readCNFRef size
+      sz' <- newCompactIn size (sz - 1)
+      writeCNFRef size sz'
+      return $ Just c
 
+{-# INLINE dropMinChan #-}
 dropMinChan :: ChanBox -> IO ()
 dropMinChan ChanBox { .. } = do
-  boxChan <- getCompact <$> readCNFRef box
-  l <- lengthChan boxChan
-  when (l >= maxLengthChan) $ do
-    v <- headChan boxChan
-    boxChan' <- tailChan boxChan
-    c <- newCompactIn box boxChan'
-    writeCNFRef box c
-    consChan v free
+  m <- dropChan box
+  case m of
+    Nothing -> return ()
+    Just c  -> pushChan free c
 
 pushMsg :: ChanBox -> Msg -> IO ()
 pushMsg b@ChanBox { .. } msg = do
-  -- dropMinChan b
-  c <- newCompactIn box msg
-  snocChan box c
+  sz <- sizeChan box
+  when (sz == maxSize - 1) $ dropMinChan b
+  c <- newCompactIn (front box) msg
+  pushChan box c

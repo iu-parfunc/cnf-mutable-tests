@@ -98,8 +98,7 @@ tests =
         , clistnfTests
         , chanboxv0Tests
         , chanboxv1Tests
-        -- broken
-        -- , chanboxv2Tests
+        , chanboxv2Tests
         ]
 
 compactTests =
@@ -360,19 +359,21 @@ chanboxv2Tests =
     testGroup
         "ChanBox.V2"
         [ testCase "newBox" $
-          do cb <- CB2.newBox
+          do cb <- CB2.newBox max
              sz <- CB2.sizeBox cb
              sz @?= 0
         , testCase "pushMsg" $
-          do cb <- CB2.newBox
+          do cb <- CB2.newBox max
              msgs <- forM vs $ \i -> CB2.newMessage cb i
              forM msgs $ CB2.pushMsg cb
              sz <- CB2.sizeBox cb
-             sz @?= 2 * l]
+             sz @?= 2 * l ]
 
   where
+    max :: Int
+    max = 60
     l :: Int
-    l = 5
+    l = 200
     vs :: [Int]
     vs = ws ++ ws
     ws = [1 .. l]
