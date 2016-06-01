@@ -34,8 +34,10 @@ data Flags = Flags { size       :: Int
 data Env = Env { randomInts :: VU.Vector Int
                , cb0        :: CB0.ChanBox
                , cb1        :: CB1.ChanBox
+               , cb2        :: CB2.ChanBox
                , cb0s       :: V.Vector CB0.ChanBox
                , cb1s       :: V.Vector CB1.ChanBox
+               , cb2s       :: V.Vector CB2.ChanBox
                }
   deriving (Generic, NFData)
 
@@ -54,9 +56,11 @@ setupEnv Flags { .. } = do
   randomInts <- VU.replicateM randomSize (uniformR (0, range) gen :: IO Int)
   cb0 <- CB0.newBox size
   cb1 <- CB1.newBox size
+  cb2 <- CB2.newBox size
   cb0s <- V.replicateM threads (CB0.newBox size)
   cb1s <- V.replicateM threads (CB1.newBox size)
-  return $ Env randomInts cb0 cb1 cb0s cb1s
+  cb2s <- V.replicateM threads (CB2.newBox size)
+  return $ Env randomInts cb0 cb1 cb2 cb0s cb1s cb2s
 
 config :: Config
 config = defaultConfig { reportFile = Just "report.html"
@@ -77,6 +81,13 @@ cbv1Bench Flags { .. } Env { .. } = Benchmarkable $
     msg <- CB1.newMessage cb $ randomInts VU.! (i `mod` randomSize)
     CB1.pushMsg cb msg
 
+cbv2Bench :: Flags -> Env -> Benchmarkable
+cbv2Bench Flags { .. } Env { .. } = Benchmarkable $
+  \n -> for_ 1 (fromIntegral n) $ \i -> do
+    let cb = cb2
+    msg <- CB2.newMessage cb $ randomInts VU.! (i `mod` randomSize)
+    CB2.pushMsg cb msg
+
 cbv0ConcBench :: Flags -> Env -> Benchmarkable
 cbv0ConcBench Flags { .. } Env { .. } = Benchmarkable $
   \n -> forConc_ 0 (threads - 1) $ \t -> do
@@ -93,6 +104,14 @@ cbv1ConcBench Flags { .. } Env { .. } = Benchmarkable $
       msg <- CB1.newMessage cb $ randomInts VU.! (i `mod` randomSize)
       CB1.pushMsg cb msg
 
+cbv2ConcBench :: Flags -> Env -> Benchmarkable
+cbv2ConcBench Flags { .. } Env { .. } = Benchmarkable $
+  \n -> forConc_ 0 (threads - 1) $ \t -> do
+    let cb = cb2s V.! t
+    for_ 0 (fromIntegral n) $ \i -> do
+      msg <- CB2.newMessage cb $ randomInts VU.! (i `mod` randomSize)
+      CB2.pushMsg cb msg
+
 main :: IO ()
 main = do
   flags@Flags { .. } <- cmdArgs defaultFlags
@@ -102,9 +121,11 @@ main = do
         bgroup "ChanBox"
           [ bench "V0" $ cbv0Bench flags env
           , bench "V1" $ cbv1Bench flags env
+          , bench "V2" $ cbv2Bench flags env
           , bgroup "Concurrent"
               [ bench "V0" $ cbv0ConcBench flags env
               , bench "V1" $ cbv1ConcBench flags env
+              , bench "V2" $ cbv2ConcBench flags env
               ]
           ]
       ]
