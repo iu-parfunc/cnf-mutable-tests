@@ -1,5 +1,6 @@
-{-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE RecordWildCards           #-}
+{-# LANGUAGE DeriveAnyClass  #-}
+{-# LANGUAGE DeriveGeneric   #-}
+{-# LANGUAGE RecordWildCards #-}
 
 -- |
 
@@ -10,45 +11,68 @@ import Control.Monad               as M
 import Data.IORef
 import Data.Vector                 as B
 import Data.Vector.Unboxed.Mutable as V
+import GHC.Generics
 
 type Msg = IOVector Int
 
-type Chan s = IORef (Vector Msg)
+data Chan = Chan { vec   :: Vector Msg
+                 , front :: IORef Int
+                 , rear  :: IORef Int
+                 }
+  deriving (Generic, NFData)
 
-data ChanBox = forall s. ChanBox { box :: Chan s }
+data ChanBox = ChanBox { box :: Chan }
 
 instance NFData ChanBox where
   rnf ChanBox { .. } = rnf box
 
 newMessage :: ChanBox -> Int -> IO Msg
-newMessage ChanBox { .. } n = V.replicate 1024 n
+newMessage _ = V.replicate 1024
 
 newBox :: IO ChanBox
-newBox = do
-  box <- newIORef empty
+newBox = newBox' 2000
+
+newBox' :: Int -> IO ChanBox
+newBox' maxSize = do
+  front <- newIORef 0
+  rear <- newIORef 0
+  msg <- V.replicate 1024 0
+  let vec = B.replicate (maxSize + 1) msg
+  let box = Chan vec front rear
   return $ ChanBox box
 
-lengthChan :: Chan s -> IO Int
-lengthChan chan =
-  B.length <$> readIORef chan
+lengthChan :: Chan -> IO Int
+lengthChan Chan { .. } = do
+  start <- readIORef front
+  end <- readIORef rear
+  let maxSize = B.length vec
+  return $ if end >= start
+             then end - start
+             else end - start + maxSize
 
 sizeBox :: ChanBox -> IO Int
 sizeBox ChanBox { .. } = lengthChan box
 
-maxLengthChan :: Int
-maxLengthChan = 200000
-
 dropMinChan :: ChanBox -> IO ()
-dropMinChan ChanBox { .. } = do
-  vec <- readIORef box
-  let l = B.length vec
-  when (l >= maxLengthChan) $ do
-    let vec' = B.tail vec
-    writeIORef box vec'
+dropMinChan ChanBox { .. } =
+  case box of
+    Chan { .. } -> do
+      start <- readIORef front
+      let maxSize = B.length vec
+          start' = (start + 1) `mod` maxSize
+      writeIORef front start'
 
 pushMsg :: ChanBox -> Msg -> IO ()
-pushMsg b@ChanBox { .. } msg = do
-  dropMinChan b
-  vec <- readIORef box
-  let vec' = snoc vec msg
-  writeIORef box vec'
+pushMsg b@ChanBox { .. } msg =
+  case box of
+    Chan { .. } -> do
+      size <- lengthChan box
+      let maxSize = B.length vec
+      when (size == maxSize - 1) $ dropMinChan b
+      end <- readIORef rear
+      let end' = (end + 1) `mod` maxSize
+          msg' = vec ! end
+      M.forM_ [0 .. 1023] $ \i -> do
+        a <- V.read msg i
+        V.write msg' i a
+      writeIORef rear end'

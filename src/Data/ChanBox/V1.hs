@@ -40,7 +40,7 @@ newMessage :: ChanBox -> Int -> IO Msg
 newMessage _ = V.replicate 1024
 
 newBox :: IO ChanBox
-newBox = newBox' 20
+newBox = newBox' 2000
 
 newBox' :: Int -> IO ChanBox
 newBox' maxSize = runCIO $ do

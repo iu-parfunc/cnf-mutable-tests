@@ -96,6 +96,7 @@ tests =
         -- , mlistTests
         , clistTests
         , clistnfTests
+        , chanboxv0Tests
         , chanboxv1Tests
         -- broken
         -- , chanboxv2Tests
@@ -313,17 +314,19 @@ chanboxv0Tests =
     testGroup
         "ChanBox.V0"
         [ testCase "newBox" $
-          do cb <- CB0.newBox
+          do cb <- CB0.newBox' max
              sz <- CB0.sizeBox cb
              sz @?= 0
         , testCase "pushMsg" $
-          do cb <- CB0.newBox
+          do cb <- CB0.newBox' max
              msgs <- forM vs $ \i -> CB0.newMessage cb i
              forM msgs $ CB0.pushMsg cb
              sz <- CB0.sizeBox cb
-             sz @?= 2 * l]
+             sz @?= min (2 * l) max]
 
   where
+    max :: Int
+    max = 60
     l :: Int
     l = 200
     vs :: [Int]
