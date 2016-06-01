@@ -14,7 +14,7 @@ extra-deps:
 - Glob-0.7.5
 - abstract-deque-0.3
 - abstract-par-0.3.3
-- aeson-0.11.1.4
+- aeson-0.11.2.0
 - ansi-terminal-0.6.2.3
 - ansi-wl-pprint-0.6.7.3
 - async-2.1.0
@@ -58,8 +58,7 @@ extra-deps:
 - unordered-containers-0.2.7.0
 - vector-0.11.0.0
 - vector-algorithms-0.7.0.1
-- vector-binary-instances-0.2.3.1
-- vector-th-unbox-0.2.1.5
+- vector-binary-instances-0.2.3.2
+- vector-th-unbox-0.2.1.6
 compiler-check: newer-minor
-# This is the mutable-cnf-0.4 release:
-resolver: ghc-8.1.20160510
+resolver: ghc-8.1

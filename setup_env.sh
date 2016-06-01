@@ -3,7 +3,7 @@
 
 # Bring the GHC with Data.Compact into path:
 
-DIR=opt/ghc-mutable-cnf-0.4/bin/
+DIR=opt/ghc-mutable-cnf-0.5/bin/
 
 if [ -d ~parfunc/$DIR ]; then
     NEWGHC=~parfunc/$DIR
@@ -17,5 +17,6 @@ else
 fi
 
 export PATH=$NEWGHC:$PATH
+export STACK_YAML=stack-cnf.yaml
 
-export STACK_YAML=stack.cnf.yaml
+ghc --version
