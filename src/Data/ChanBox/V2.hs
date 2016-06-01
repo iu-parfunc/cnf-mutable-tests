@@ -17,7 +17,6 @@ import Data.CNFRef.DeepStrict
 import Data.Compact.Indexed
 import Data.Vector.Unboxed.Mutable as VU
 import GHC.Generics
-import System.IO.Unsafe
 
 type Msg = IOVector Int
 
@@ -35,6 +34,9 @@ data ChanBox = forall s. ChanBox { box     :: Chan s
                                  , free    :: Chan s
                                  , maxSize :: Int
                                  }
+
+instance NFData ChanBox where
+  rnf ChanBox { .. } = rnf box `seq` rnf free `seq` rnf maxSize
 
 newMessage :: ChanBox -> Int -> IO Msg
 newMessage ChanBox { .. } n = do
