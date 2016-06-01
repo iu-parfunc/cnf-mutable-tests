@@ -31,12 +31,12 @@ instance NFData ChanBox where
 newMessage :: ChanBox -> Int -> IO Msg
 newMessage _ = VU.replicate 1024
 
-{-# INLINE newBox #-}
-newBox :: IO ChanBox
-newBox = newBox' 2000
+{-# INLINE newBox' #-}
+newBox' :: IO ChanBox
+newBox' = newBox 2000
 
-newBox' :: Int -> IO ChanBox
-newBox' maxSize = do
+newBox :: Int -> IO ChanBox
+newBox maxSize = do
   front <- newIORef 0
   rear <- newIORef 0
   vec <- V.replicateM (maxSize + 1) (VU.replicate 1024 0)

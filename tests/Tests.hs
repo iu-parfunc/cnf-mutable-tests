@@ -314,11 +314,11 @@ chanboxv0Tests =
     testGroup
         "ChanBox.V0"
         [ testCase "newBox" $
-          do cb <- CB0.newBox' max
+          do cb <- CB0.newBox max
              sz <- CB0.sizeBox cb
              sz @?= 0
         , testCase "pushMsg" $
-          do cb <- CB0.newBox' max
+          do cb <- CB0.newBox max
              msgs <- forM vs $ \i -> CB0.newMessage cb i
              forM msgs $ CB0.pushMsg cb
              sz <- CB0.sizeBox cb
@@ -337,11 +337,11 @@ chanboxv1Tests =
     testGroup
         "ChanBox.V1"
         [ testCase "newBox" $
-          do cb <- CB1.newBox' max
+          do cb <- CB1.newBox max
              sz <- CB1.sizeBox cb
              sz @?= 0
         , testCase "pushMsg" $
-          do cb <- CB1.newBox' max
+          do cb <- CB1.newBox max
              msgs <- forM vs $ \i -> CB1.newMessage cb i
              forM msgs $ CB1.pushMsg cb
              sz <- CB1.sizeBox cb
