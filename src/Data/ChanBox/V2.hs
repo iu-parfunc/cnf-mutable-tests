@@ -11,7 +11,9 @@ module Data.ChanBox.V2 where
 
 import Control.DeepSeq
 import Control.Monad
+import Control.Monad.Trans
 import Control.Monad.Utils
+import Data.Atomics.Counter
 import Data.CNFRef
 import Data.CNFRef.DeepStrict
 import Data.Compact.Indexed
@@ -24,9 +26,14 @@ data MsgList s = Nil (BlockChain s)
                | Cons (Compact s Msg) (MsgList s)
   deriving (Generic, NFData, DeepStrict)
 
+instance NFData AtomicCounter where
+  rnf _ = ()
+
+instance DeepStrict AtomicCounter where
+
 data Chan s = Chan { front :: CNFRef s (MsgList s)
                    , rear  :: CNFRef s (MsgList s)
-                   , size  :: CNFRef s Int
+                   , size  :: AtomicCounter
                    }
   deriving (Generic, NFData, DeepStrict)
 
@@ -60,8 +67,8 @@ newBox maxSize = runCIO $ do
   bl <- getBlockChain
   ref <- newCNFRef (Nil bl)
   ref' <- newCNFRef (Nil bl)
-  sz <- newCNFRef 0
-  sz' <- newCNFRef 0
+  sz <- liftIO $ newCounter 0
+  sz' <- liftIO $ newCounter 0
   let box = Chan ref ref sz
       free = Chan ref' ref' sz'
   return $ ChanBox box free maxSize
@@ -70,7 +77,7 @@ newBox maxSize = runCIO $ do
 {-# INLINE sizeChan #-}
 sizeChan :: Chan s -> IO Int
 sizeChan Chan { .. } =
-  getCompact <$> readCNFRef size
+  readCounter size
 
 {-# INLINE sizeBox #-}
 sizeBox :: ChanBox -> IO Int
@@ -88,9 +95,7 @@ pushChan Chan { .. } c = do
     Cons _ end -> do
       r' <- newCompactIn rear (Cons c end)
       writeCNFRef rear r'
-  sz <- getCompact <$> readCNFRef size
-  sz' <- newCompactIn size (sz + 1)
-  writeCNFRef size sz'
+  incrCounter_ 1 size
 
 dropChan :: Chan s -> IO (Maybe (Compact s Msg))
 dropChan Chan { .. } = do
@@ -100,9 +105,9 @@ dropChan Chan { .. } = do
     Cons c next -> do
       f' <- newCompactIn front next
       writeCNFRef front f'
-      sz <- getCompact <$> readCNFRef size
-      sz' <- newCompactIn size (sz - 1)
-      writeCNFRef size sz'
+      -- TODO: decrCounter
+      sz <- readCounter size
+      writeCounter size (sz - 1)
       return $ Just c
 
 {-# INLINE dropMinChan #-}
