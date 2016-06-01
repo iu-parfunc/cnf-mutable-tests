@@ -13,7 +13,8 @@ extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     Data.CNFRef
+  exposed-modules:     Control.Monad.Utils
+                     , Data.CNFRef
                      , Data.CNFRef.DeepStrict
                      , Data.IntBox
                      , Data.CList
@@ -23,7 +24,8 @@ library
                      , Data.ChanBox.V1
                      , Data.ChanBox.V2
   other-modules:       Data.CNFRef.Internal
-  build-depends:       atomic-primops >=0.8.0.2
+  build-depends:       async >= 2.1.0
+                     , atomic-primops >=0.8.0.2
                      , base >=4.8
                      , compact >=1.0
                      , compact-indexed
@@ -58,12 +60,11 @@ test-suite tests
 benchmark bench-clist
   type:                exitcode-stdio-1.0
   main-is:             BenchCList.hs
-  other-modules:       Utils
   build-depends:       base >=4.8
-                     , deepseq >=1.4
                      , cmdargs >=0.10.14
-                     , criterion >=1.1.1.0
                      , cnf-mutable
+                     , criterion >=1.1.1.0
+                     , deepseq >=1.4
                      , pcg-random >=0.1.3.2
                      , vector >=0.11
   hs-source-dirs:      bench
@@ -73,12 +74,11 @@ benchmark bench-clist
 benchmark bench-chanbox
   type:                exitcode-stdio-1.0
   main-is:             BenchChanBox.hs
-  other-modules:       Utils
   build-depends:       base >=4.8
-                     , deepseq >=1.4
                      , cmdargs >=0.10.14
-                     , criterion >=1.1.1.0
                      , cnf-mutable
+                     , criterion >=1.1.1.0
+                     , deepseq >=1.4
                      , pcg-random >=0.1.3.2
                      , vector >=0.11
   hs-source-dirs:      bench

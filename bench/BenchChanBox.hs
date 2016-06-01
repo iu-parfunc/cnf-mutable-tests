@@ -8,6 +8,7 @@ module Main where
 
 import Control.DeepSeq
 import Control.Monad
+import Control.Monad.Utils
 import Criterion.Main
 import Criterion.Types
 import Data.Vector.Unboxed         as VU
@@ -16,7 +17,6 @@ import GHC.Int
 import System.Console.CmdArgs      as CA
 import System.Environment
 import System.Random.PCG.Fast.Pure as PCG
-import Utils
 
 import qualified Data.ChanBox.V0 as CB0
 import qualified Data.ChanBox.V1 as CB1
