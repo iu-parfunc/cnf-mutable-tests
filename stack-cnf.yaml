@@ -31,6 +31,7 @@ extra-deps:
 - fail-4.9.0.0
 - hashable-1.2.4.0
 - hastache-0.6.1
+- hostname-1.0
 - ieee754-0.7.8
 - math-functions-0.1.5.2
 - monad-par-0.3.4.7

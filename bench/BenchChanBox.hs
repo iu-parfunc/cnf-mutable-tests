@@ -6,18 +6,18 @@
 
 module Main where
 
-import Control.DeepSeq
-import Control.Monad
-import Control.Monad.Utils
-import Criterion.Main
-import Criterion.Types
-import Data.Vector                 as V
-import Data.Vector.Unboxed         as VU
-import GHC.Generics
-import GHC.Int
-import System.Console.CmdArgs      as CA
-import System.Environment
-import System.Random.PCG.Fast.Pure as PCG
+import           Control.DeepSeq
+import           Control.Monad.Utils
+import           Criterion.Main
+import           Criterion.Types
+import           Data.Time
+import qualified Data.Vector                 as V
+import qualified Data.Vector.Unboxed         as VU
+import           GHC.Generics
+import           Network.HostName
+import           System.Console.CmdArgs      as CA
+import           System.Environment
+import           System.Random.PCG.Fast.Pure as PCG
 
 import qualified Data.ChanBox.V0 as CB0
 import qualified Data.ChanBox.V1 as CB1
@@ -62,10 +62,16 @@ setupEnv Flags { .. } = do
   cb2s <- V.replicateM threads (CB2.newBox size)
   return $ Env randomInts cb0 cb1 cb2 cb0s cb1s cb2s
 
-config :: Config
-config = defaultConfig { reportFile = Just "report.html"
-                       , csvFile = Just "report.csv"
-                       }
+getConfig :: IO Config
+getConfig = do
+  hostname <- getHostName
+  time <- getCurrentTime
+  let date = formatTime defaultTimeLocale (iso8601DateFormat Nothing) time
+      filename = "report-" ++ hostname ++ "-" ++ date
+  return $ defaultConfig
+    { reportFile = Just $ filename ++ ".html"
+    , csvFile = Just $ filename ++ ".csv"
+    }
 
 cbv0Bench :: Flags -> Env -> Benchmarkable
 cbv0Bench Flags { .. } Env { .. } = Benchmarkable $
@@ -115,6 +121,7 @@ cbv2ConcBench Flags { .. } Env { .. } = Benchmarkable $
 main :: IO ()
 main = do
   flags@Flags { .. } <- cmdArgs defaultFlags
+  config <- getConfig
   withArgs criterion $
     defaultMainWith config
       [ env (setupEnv flags) $ \env ->
