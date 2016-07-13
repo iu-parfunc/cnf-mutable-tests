@@ -105,9 +105,7 @@ dropChan Chan { .. } = do
     Cons c next -> do
       f' <- newCompactIn front next
       writeCNFRef front f'
-      -- TODO: decrCounter
-      sz <- readCounter size
-      writeCounter size (sz - 1)
+      incrCounter_ (-1) size
       return $ Just c
 
 {-# INLINE dropMinChan #-}
