@@ -75,7 +75,6 @@ benchmark bench-chanbox
   type:                exitcode-stdio-1.0
   main-is:             BenchChanBox.hs
   build-depends:       base >=4.8
-                     , cmdargs >=0.10.14
                      , cnf-mutable
                      , criterion >=1.1.1.0
                      , deepseq >=1.4
